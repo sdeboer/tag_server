@@ -1,14 +1,21 @@
 {application, tag_server,
   [
+{lager, [
+    {handlers, [
+        {lager_console_backend, debug},
+        {lager_file_backend, [{file, "console.log"}, {level, debug}]},
+        {lager_file_backend, [{file, "error.log"}, {level, error}]}
+        ]}
+    ]},
     {description, "You're it!"},
     {vsn, git},
     {registered, [tag_server_sup]},
-    {modules, [tag_server_app, tag_server_sup, ws_handler]},
     {applications, [
         kernel,stdlib,crypto,lager,
-        compiler,syntax_tools,cowboy
+        compiler,syntax_tools,ranch,
+        cowboy
         ]},
     {mod, { tag_server_app, []}},
-    {env, []}
+    {env, [{http_port, 10100}]}
     ]}.
 % vim: set filetype=erlang:

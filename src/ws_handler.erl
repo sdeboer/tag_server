@@ -12,13 +12,13 @@
   websocket_info/3, websocket_terminate/3
   ]).
 
-init({tcp, http}, Req, _Opts) ->
+init(_Transport, Req, _Opts) ->
   lager:debug("Request: ~p", [Req]),
   {upgrade, protocol, cowboy_http_websocket}.
 
 % Since we upgraded to WS in init, should never get here
 handle(Req, State) ->
-  lager:warn("Unexpected request: ~p", [Req]),
+  lager:warning("Unexpected request: ~p", [Req]),
   {ok, Req2} = cowboy_http_req:reply(404, [
         {'Content-Type', <<"text/html">>}
         ]),
@@ -28,7 +28,7 @@ terminate(_Reason, _Req, _State) ->
   ok.
 
 % Called for every new websocket connection
-websocket_init(_Any, Req, []) ->
+websocket_init(_Transport, Req, []) ->
   lager:debug("New Client"),
   Req2 = cowboy_http_req:compact(Req),
   {ok, Req2, undefined, hibernate}.
