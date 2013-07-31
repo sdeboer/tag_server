@@ -1,0 +1,14 @@
+{application, tag_server,
+  [
+    {description, "You're it!"},
+    {vsn, git},
+    {registered, [tag_server_sup]},
+    {modules, [tag_server_app, tag_server_sup, ws_handler]},
+    {applications, [
+        kernel,stdlib,crypto,lager,
+        compiler,syntax_tools,cowboy
+        ]},
+    {mod, { tag_server_app, []}},
+    {env, []}
+    ]}.
+% vim: set filetype=erlang:
