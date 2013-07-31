@@ -6,15 +6,9 @@
 -define(C_ACCEPTORS, 100).
 
 start(normal, _StartArgs) ->
-  Dispatch = cowboy_router:compile(routes()),
-  lager:debug("Dispatch: ~p", [Dispatch]),
-  Port = port(),
-  ProtoOpts = [{env, [{dispatch, Dispatch}]}],
-  {ok, _RefId} = cowboy:start_http(ts_websocket,
-                                   ?C_ACCEPTORS,
-                                   [{port, Port}],
-                                   ProtoOpts
-                                  ),
+  PortOpts = [{port, port()}],
+  ProtoOpts = [{env, [{dispatch, routes()}]}],
+  {ok, _RefId} = cowboy:start_http(http, ?C_ACCEPTORS, PortOpts, ProtoOpts),
   tag_server_sup:start_link().
 
 stop(_State) ->
@@ -23,11 +17,18 @@ stop(_State) ->
 % Internal Functions
 
 routes() ->
-  [
-    {'_', [
-        {"/", ws_handler, []}
-        ]}
-    ].
+  cowboy_router:compile(
+    [{'_',
+      [
+          {"/", toppage_handler, []},
+          {"/ws", ws_handler, []},
+          {"/static/[...]", cowboy_static, [
+              {directory, {priv_dir, tag_server, [<<"static">>]}},
+              {mimetypes, {fun mimetypes:path_to_mimes/2, default}}
+              ]}
+          ]
+     }]
+    ).
 
 port() ->
   case os:getenv("PORT") of

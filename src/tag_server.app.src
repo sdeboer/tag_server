@@ -1,18 +1,11 @@
 {application, tag_server,
   [
-{lager, [
-    {handlers, [
-        {lager_console_backend, debug},
-        {lager_file_backend, [{file, "console.log"}, {level, debug}]},
-        {lager_file_backend, [{file, "error.log"}, {level, error}]}
-        ]}
-    ]},
     {description, "You're it!"},
     {vsn, git},
     {registered, [tag_server_sup]},
     {applications, [
-        kernel,stdlib,crypto,lager,
-        compiler,syntax_tools,ranch,
+        kernel,stdlib,lager,
+        syntax_tools,
         cowboy
         ]},
     {mod, { tag_server_app, []}},
