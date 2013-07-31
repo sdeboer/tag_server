@@ -3,6 +3,5 @@
 .*.un~
 deps
 ebin
-tag_server
 *.dump
 log
