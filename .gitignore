@@ -5,3 +5,4 @@ deps
 ebin
 *.dump
 log
+.session.vim
