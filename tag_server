@@ -1,3 +1,7 @@
 #!/bin/sh
 
+# Potential ENV vars, defaults are set in tag_server.app.src
+# SESSION_COOKIE (ts_session)
+# PORT (10100)
+
 erl -pa ebin deps/*/ebin -s tag_server

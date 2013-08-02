@@ -9,13 +9,22 @@ execute(Req, Env) ->
     {undefined, _} ->
       % FIXME this should really be a secure cookie of the nature
       % used within Rails with the secret key.
-      UUID = uuid:to_string(uuid:uuid3(dns, "gvt.ws")),
-      lager:info("SM : ~p", [UUID]),
-      Req2 = cowboy_req:set_resp_cookie(<<"ts_session">>, UUID, [], Req),
+      UUID = uuid:to_string(uuid:uuid3(dns, cowboy_req:host(Req))),
+      Req2 = cowboy_req:set_resp_cookie(session_name(), UUID, [], Req),
       {ok, Req2, Env};
-    {U2, _} ->
+    {_UUID, _} ->
       % FIXME cont'd and then we need to confirm that we still
       % like this browser.
-      lager:info("U2 : ~p", [U2]),
       {ok, Req, Env}
+  end.
+
+session_name() ->
+  % Is this expensive enough that it should be memoizing the
+  % value?
+  case os:getenv("SESSION_COOKIE") of
+    false ->
+      {ok, Sc2} = application:get_env(session_cookie),
+      Sc2;
+    Sc ->
+      Sc
   end.

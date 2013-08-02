@@ -9,6 +9,9 @@
         cowboy
         ]},
     {mod, { tag_server_app, []}},
-    {env, [{http_port, 10100}]}
+    {env, [
+        {http_port, 10100},
+        {session_cookie, <<"ts_session">>}
+        ]}
     ]}.
 % vim: set filetype=erlang:
