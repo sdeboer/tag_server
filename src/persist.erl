@@ -39,11 +39,11 @@ stop() ->
   gen_server:cast(?MODULE, stop).
 
 handle_call({get_value, Key}, _From, Redis) ->
-  {ok, Value} = eredis:q(Redis, [ "GET", Key ]),
+  {ok, Value} = eredis:q(Redis, ["GET", Key]),
   {reply, Value, Redis};
 
 handle_call({save_value, Key, Value}, _From, Redis) ->
-  {ok, <<"OK">>} = eredis:q(Redis, [ "SET", Key, Value ]),
+  {ok, <<"OK">>} = eredis:q(Redis, ["SET", Key, Value]),
   {reply, ok, Redis};
 
 handle_call(_Message, _From, Redis) ->
