@@ -9,7 +9,7 @@ start(normal, _StartArgs) ->
   PortOpts = [{port, port()}],
   ProtoOpts = [
       {env, [{dispatch, routes()}]},
-      {middlewares, [session_middleware, cowboy_router, cowboy_handler]}
+      {middlewares, [sessions, cowboy_router, cowboy_handler]}
       ],
   {ok, _RefId} = cowboy:start_http(http, ?C_ACCEPTORS, PortOpts, ProtoOpts),
   tag_server_sup:start_link().
@@ -24,6 +24,7 @@ routes() ->
     [{'_',
       [
           {"/", toppage_handler, []},
+          {"/profile/[:profile_id]", profile_handler, []},
           {"/ws", ws_handler, []},
           {"/static/[...]", cowboy_static, [
               {directory, {priv_dir, tag_server, [<<"static">>]}},
