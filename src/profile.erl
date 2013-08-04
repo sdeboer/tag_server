@@ -42,7 +42,10 @@ coords(P, New) ->
   P#profile{coords = New}.
 
 find(PID) ->
-  persist:load(?PREFIX, PID).
+  case persist:load(?PREFIX, PID) of
+    undefined -> undefined;
+    Data -> binary_to_term(Data)
+  end.
 
 save(P) ->
   ok = persist:save(?PREFIX, P),
