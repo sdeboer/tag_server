@@ -21,6 +21,6 @@ terminate(_Reason, _Req, _State) ->
 
 get_html() ->
 	{ok, Cwd} = file:get_cwd(),
-	Filename =filename:join([Cwd, "priv", "html_ws_client.html"]),
+	Filename = filename:join([Cwd, "priv", "html_ws_client.html"]),
 	{ok, Binary} = file:read_file(Filename),
 	Binary.

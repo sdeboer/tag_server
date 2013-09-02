@@ -4,4 +4,8 @@
 # SESSION_COOKIE (ts_session)
 # PORT (10100)
 
-erl -pa ebin deps/*/ebin -s tag_server
+erl \
+	-pa ebin \
+	-pa deps/*/ebin \
+	-config app \
+	-s tag_server
