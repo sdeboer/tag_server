@@ -25,7 +25,7 @@ routes() ->
 	cowboy_router:compile(
 		[{'_',
 				[
-					%{"/profile/[:profile_id]", profile_handler, []},
+					{"/profile/[:profile_id]", profile_handler, []},
 					%{"/ws", ws_handler, []},
 					{"/static/[...]", cowboy_static, [
 							{directory, {priv_dir, tag_server, [<<"static">>]}}

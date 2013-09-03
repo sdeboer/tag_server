@@ -15,47 +15,53 @@
 	to_json/2, create_profile/2
 	]).
 
+-record(state,
+	{
+		viewing = null,
+		observer = null }).
+
 init({tcp, http}, _Req, _Opts) ->
-	lager:info("Upgrading to REST"),
 	{upgrade, protocol, cowboy_rest}.
 
 rest_init(Req, _RouteOpts) ->
-	lager:debug("REST Init"),
 	UUID = sessions:uuid(Req),
-	lager:debug("UUID ~p.", UUID),
 	Observer = profile:find_or_create_by_session(UUID),
 	OID = profile:id(Observer),
-	View = case cowboy_req:binding(profile_id, Req) of
-		undefined ->
+	lager:debug("OID ~p", [OID]),
+	View = case cowboy_req:binding(profile_id, Req, undefined) of
+		{undefined, _Req} ->
 			Observer;
-		ProfileId when OID == ProfileId->
+		{ProfileId, _Req} when OID == ProfileId ->
 			Observer;
-		ProfileId ->
+		{ProfileId, _Req} ->
+			lager:debug("Lookup ~p", [ProfileId]),
 			profile:find(ProfileId)
 	end,
 
-	State = [{profile, View}, {observer, Observer}],
+	S = #state{ viewing = View, observer = Observer },
 
-	{ok, Req, State}.
+	{ok, Req, S}.
 
 content_types_provided(Req, State) ->
 	{[
-		{<<"application/json">>, to_json},
-		{<<"text/html">>, to_json},
-		{<<"text/plain">>, to_json}
-		], Req, State}.
+			{<<"application/json">>, to_json},
+			{<<"text/html">>, to_json},
+			{<<"text/plain">>, to_json}
+			], Req, State}.
 
 allowed_methods(Req, State) ->
 	{[<<"GET">>, <<"POST">>],
 		Req, State}.
 
 %content_types_accepted(Req, State) ->
-	%{[
-			%{{<<"application">>, <<"x-www-form-urlencoded">>, []}, created_profile}],
-		%Req, State}.
+%{[
+%{{<<"application">>, <<"x-www-form-urlencoded">>, []}, created_profile}],
+%Req, State}.
 
-to_json(Req, State) ->
-	{<<"[\"to_json\",1,2,3,4]">>, Req, State}.
+to_json(Req, S) ->
+	OID = profile:id(S#state.observer),
+	% just showing the OID to show we can do it.
+	{jiffy:encode({[{oid, list_to_binary(OID)}]}), Req, S}.
 
-create_profile(Req, State) ->
-	{<<"[\"create_profile\",10,11,12,13]">>, Req, State}.
+create_profile(Req, S) ->
+	{<<"[\"create_profile\",10,11,12,13]">>, Req, S}.
