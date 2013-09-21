@@ -6,7 +6,7 @@
 -export([
 	rest_init/2,
 	content_types_provided/2,
-%content_types_accepted/2,
+	%content_types_accepted/2,
 	allowed_methods/2
 	]).
 

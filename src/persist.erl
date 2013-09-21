@@ -3,14 +3,14 @@
 
 % Model API
 -export([save/2, save/3,
-         load/1, load/2]).
+	load/1, load/2]).
 
 % gen_server API
 -export([start_link/0]).
 
 -export([init/1, handle_call/3, handle_cast/2,
-         terminate/2, handle_info/2, 
-         code_change/3, stop/1]).
+	terminate/2, handle_info/2, 
+	code_change/3, stop/1]).
 
 -define(DEFAULT_PREFIX, "tag").
 -define(SEP, ":").

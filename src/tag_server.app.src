@@ -1,17 +1,17 @@
 {application, tag_server,
-  [
-    {description, "You're it!"},
-    {vsn, git},
-    {registered, [tag_server_sup]},
-    {applications, [
-        kernel,stdlib,lager,
-        syntax_tools,
-        cowboy
-        ]},
-    {mod, { tag_server_app, []}},
-    {env, [
-        {http_port, 10100},
-        {session_cookie, <<"ts_session">>}
-        ]}
-    ]}.
+	[
+		{description, "You're it!"},
+		{vsn, git},
+		{registered, [tag_server_sup]},
+		{applications, [
+				kernel,stdlib,lager,
+				syntax_tools,
+				cowboy
+				]},
+		{mod, { tag_server_app, []}},
+		{env, [
+				{http_port, 10100},
+				{session_cookie, <<"ts_session">>}
+				]}
+		]}.
 % vim: set filetype=erlang:
