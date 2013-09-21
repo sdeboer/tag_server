@@ -15,7 +15,8 @@ init({tcp, http}, Req, _RouteOpts) ->
 websocket_init(_Transport, Req, _RouteOpts) ->
 	lager:info("New Client"),
 	erlang:start_timer(1000, self(), <<"Hi!">>),
-	{ok, Req, undefined_state, hibernate}.
+	Req2 = cowboy_req:compact(Req),
+	{ok, Req2, undefined_state, hibernate}.
 
 % Called when text message arrives
 websocket_handle({text, Msg}, Req, State) ->

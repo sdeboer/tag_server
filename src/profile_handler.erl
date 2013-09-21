@@ -25,6 +25,7 @@ init({tcp, http}, _Req, _Opts) ->
 
 rest_init(Req, _RouteOpts) ->
 	UUID = sessions:uuid(Req),
+	lager:debug("focbs"),
 	Observer = profile:find_or_create_by_session(UUID),
 	OID = profile:id(Observer),
 	lager:debug("OID ~p", [OID]),
@@ -59,9 +60,17 @@ allowed_methods(Req, State) ->
 %Req, State}.
 
 to_json(Req, S) ->
-	OID = profile:id(S#state.observer),
+	Json = profile:to_json(S#state.viewing),
 	% just showing the OID to show we can do it.
-	{jiffy:encode({[{oid, list_to_binary(OID)}]}), Req, S}.
+	% Json = jiffy:encode({[{oid, list_to_binary(OID)}]}),
+	Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
+		{undefined, _Req2} -> Json;
+		{Fn, _Req2} ->
+			St = <<"=(">>,
+			En = <<");">>,
+			<< Fn/bitstring, St/bitstring, Json/bitstring, En/bitstring >>
+	end,
+	{Resp, Req, S}.
 
 create_profile(Req, S) ->
 	{<<"[\"create_profile\",10,11,12,13]">>, Req, S}.

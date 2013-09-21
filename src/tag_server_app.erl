@@ -11,9 +11,7 @@ start(normal, _StartArgs) ->
 			{env, [{dispatch, routes()}]},
 			{middlewares, [sessions, cowboy_router, cowboy_handler]}
 			],
-	lager:debug("Start Me up"),
 	{ok, _RefId} = cowboy:start_http(http, ?C_ACCEPTORS, PortOpts, ProtoOpts),
-	lager:debug("Started"),
 	tag_server_sup:start_link().
 
 stop(_State) ->
