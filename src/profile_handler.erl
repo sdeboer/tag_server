@@ -25,7 +25,6 @@ init({tcp, http}, _Req, _Opts) ->
 
 rest_init(Req, _RouteOpts) ->
 	UUID = sessions:uuid(Req),
-	lager:debug("focbs"),
 	Observer = profile:find_or_create_by_session(UUID),
 	OID = profile:id(Observer),
 	lager:debug("OID ~p", [OID]),
@@ -60,17 +59,28 @@ allowed_methods(Req, State) ->
 %Req, State}.
 
 to_json(Req, S) ->
-	Json = profile:to_json(S#state.viewing),
-	% just showing the OID to show we can do it.
-	% Json = jiffy:encode({[{oid, list_to_binary(OID)}]}),
-	Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
-		{undefined, _Req2} -> Json;
-		{Fn, _Req2} ->
-			St = <<"=(">>,
-			En = <<");">>,
-			<< Fn/bitstring, St/bitstring, Json/bitstring, En/bitstring >>
-	end,
-	{Resp, Req, S}.
+	case S#state.viewing of
+		undefined ->
+			{ok, Req2} = cowboy_req:reply(
+					404,
+					[{<<"content-type">>, <<"application/json">>}],
+					jiffy:encode({[{error, <<"not_found">>}]}),
+					Req),
+			{halt, Req2, S};
+
+		View ->
+			Json = profile:to_json(View),
+			% just showing the OID to show we can do it.
+			% Json = jiffy:encode({[{oid, list_to_binary(OID)}]}),
+			Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
+				{undefined, _Req2} -> Json;
+				{Fn, _Req2} ->
+					St = <<"=(">>,
+					En = <<");">>,
+					<< Fn/bitstring, St/bitstring, Json/bitstring, En/bitstring >>
+			end,
+			{Resp, Req, S}
+	end.
 
 create_profile(Req, S) ->
 	{<<"[\"create_profile\",10,11,12,13]">>, Req, S}.
