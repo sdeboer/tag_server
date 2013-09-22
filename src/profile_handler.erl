@@ -71,9 +71,7 @@ to_json(Req, S) ->
 			Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
 				{undefined, _Req2} -> Json;
 				{Fn, _Req2} ->
-					St = <<"=(">>,
-					En = <<");">>,
-					<< Fn/bitstring, St/bitstring, Json/bitstring, En/bitstring >>
+					[Fn, <<"(">>, Json, <<");">>]
 			end,
 			{Resp, Req, S}
 	end.
