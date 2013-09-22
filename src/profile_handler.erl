@@ -5,20 +5,20 @@
 % Rest Standards
 -export([
 	rest_init/2,
-	content_types_provided/2,
-	%content_types_accepted/2,
+	content_types_provided/2, content_types_accepted/2,
 	allowed_methods/2
 	]).
 
 % Callbacks
 -export([
-	to_json/2, create_profile/2
+	to_json/2,
+	alter_profile/2
 	]).
 
--record(state,
-	{
+-record(state, {
 		viewing = null,
-		observer = null }).
+		observer = null
+		}).
 
 init({tcp, http}, _Req, _Opts) ->
 	{upgrade, protocol, cowboy_rest}.
@@ -50,23 +50,19 @@ content_types_provided(Req, State) ->
 			], Req, State}.
 
 allowed_methods(Req, State) ->
-	{[<<"GET">>, <<"POST">>],
+	{[<<"GET">>, <<"POST">>, <<"PATCH">>, <<"PUT">>],
 		Req, State}.
 
-%content_types_accepted(Req, State) ->
-%{[
-%{{<<"application">>, <<"x-www-form-urlencoded">>, []}, created_profile}],
-%Req, State}.
+content_types_accepted(Req, State) ->
+	{[
+			{{<<"application">>, <<"x-www-form-urlencoded">>, []}, alter_profile}
+			], Req, State}.
 
 to_json(Req, S) ->
 	case S#state.viewing of
 		undefined ->
-			{ok, Req2} = cowboy_req:reply(
-					404,
-					[{<<"content-type">>, <<"application/json">>}],
-					jiffy:encode({[{error, <<"not_found">>}]}),
-					Req),
-			{halt, Req2, S};
+			Err = [{error, <<"not_found">>}],
+			{halt, error_response(404, Err, Req), S};
 
 		View ->
 			Json = profile:to_json(View),
@@ -82,5 +78,21 @@ to_json(Req, S) ->
 			{Resp, Req, S}
 	end.
 
-create_profile(Req, S) ->
-	{<<"[\"create_profile\",10,11,12,13]">>, Req, S}.
+alter_profile(Req, S) ->
+	case S#state.viewing of
+		undefined ->
+			Json = jiffy:encode({[{alter_profile, <<"test">>}]}),
+			{Json, Req, S};
+
+		_View ->
+			Err = [{error, <<"not_allowed">>}],
+			{halt, error_response(405, Err, Req), S}
+	end.
+
+error_response(Code, Resp, Req) ->
+	{ok, Req2} = cowboy_req:reply(
+			Code,
+			[{<<"content-type">>, <<"application/json">>}],
+			jiffy:encode({Resp}),
+			Req),
+	Req2.
