@@ -32,9 +32,9 @@ session_name() ->
 	% it when it reloads on the fly.
 	%
 	% And this could probably be DRY'd into the tag_server_app
-	{ok, App} = application:get_application(whereis(tag_server_sup)),
 	case os:getenv("SESSION_COOKIE") of
 		false ->
+			{ok, App} = application:get_application(whereis(tag_server_sup)),
 			{ok, Sc2} = application:get_env(App, session_cookie),
 			Sc2;
 		Sc ->

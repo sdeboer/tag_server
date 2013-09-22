@@ -55,7 +55,7 @@ allowed_methods(Req, State) ->
 
 content_types_accepted(Req, State) ->
 	{[
-			{{<<"application">>, <<"x-www-form-urlencoded">>, []}, alter_profile}
+			{{<<"application">>, <<"json">>, []}, alter_profile}
 			], Req, State}.
 
 to_json(Req, S) ->
@@ -77,6 +77,7 @@ to_json(Req, S) ->
 	end.
 
 alter_profile(Req, S) ->
+	lager:debug("altering ~p", [Req]),
 	case S#state.viewing of
 		undefined ->
 			Json = jiffy:encode({[{alter_profile, <<"test">>}]}),
