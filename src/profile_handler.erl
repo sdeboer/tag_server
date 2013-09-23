@@ -24,8 +24,9 @@ init({tcp, http}, _Req, _Opts) ->
 	{upgrade, protocol, cowboy_rest}.
 
 rest_init(Req, _RouteOpts) ->
-	UUID = sessions:uuid(Req),
-	Observer = profile:find_or_create_by_session(UUID),
+	SID = sessions:uuid(Req),
+	lager:debug("SID ~p", [SID]),
+	Observer = profile:find_or_create_by_session(SID),
 	OID = profile:id(Observer),
 	lager:debug("OID ~p", [OID]),
 	View = case cowboy_req:binding(profile_id, Req, undefined) of
