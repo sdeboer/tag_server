@@ -25,17 +25,14 @@ init({tcp, http}, _Req, _Opts) ->
 
 rest_init(Req, _RouteOpts) ->
 	SID = sessions:uuid(Req),
-	lager:debug("SID ~p", [SID]),
 	Observer = profile:find_or_create_by_session(SID),
 	OID = profile:id(Observer),
-	lager:debug("OID ~p", [OID]),
 	View = case cowboy_req:binding(profile_id, Req, undefined) of
 		{undefined, _Req} ->
-			Observer;
+			undefined;
 		{ProfileId, _Req} when OID == ProfileId ->
 			Observer;
 		{ProfileId, _Req} ->
-			lager:debug("Lookup ~p", [ProfileId]),
 			profile:find(ProfileId)
 	end,
 
@@ -43,56 +40,62 @@ rest_init(Req, _RouteOpts) ->
 
 	{ok, Req, S}.
 
-content_types_provided(Req, State) ->
-	{[
-			{<<"application/json">>, to_json},
-			{<<"text/html">>, to_json},
-			{<<"text/plain">>, to_json}
-			], Req, State}.
-
 allowed_methods(Req, State) ->
 	{[<<"GET">>, <<"POST">>, <<"PATCH">>, <<"PUT">>],
 		Req, State}.
 
 content_types_accepted(Req, State) ->
 	{[
-			{{<<"application">>, <<"json">>, []}, alter_profile}
+			{{<<"application">>, <<"json">>, '*'}, alter_profile}
+			], Req, State}.
+
+content_types_provided(Req, State) ->
+	{[
+			{{<<"application">>, <<"json">>, '*'}, to_json},
+			{<<"text/html">>, to_json},
+			{<<"text/plain">>, to_json}
 			], Req, State}.
 
 to_json(Req, S) ->
-	case S#state.viewing of
-		undefined ->
-			Err = [{error, <<"not_found">>}],
-			{halt, error_response(404, Err, Req), S};
+	lager:debug("TO"),
+	Prof = case S#state.viewing of
+		undefined -> S#state.observer;
+		P -> P
+	end,
 
-		View ->
-			Json = profile:to_json(View),
-			% just showing the OID to show we can do it.
-			% Json = jiffy:encode({[{oid, list_to_binary(OID)}]}),
-			Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
-				{undefined, _Req2} -> Json;
-				{Fn, _Req2} ->
-					[Fn, <<"(">>, Json, <<");">>]
-			end,
-			{Resp, Req, S}
-	end.
+	Json = profile:to_json(Prof),
+
+	return_json(Json, Req, S).
+
+return_json(Json, Req, S) ->
+	Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
+		{undefined, _Req2} -> Json;
+		{Fn, _Req2} ->
+			[Fn, <<"(">>, Json, <<");">>]
+	end,
+	{Resp, Req, S}.
 
 alter_profile(Req, S) ->
-	lager:debug("altering ~p", [Req]),
-	case S#state.viewing of
-		undefined ->
-			Json = jiffy:encode({[{alter_profile, <<"test">>}]}),
-			{Json, Req, S};
-
-		_View ->
-			Err = [{error, <<"not_allowed">>}],
-			{halt, error_response(405, Err, Req), S}
+	P = S#state.observer,
+	lager:debug("AP"),
+	case cowboy_req:body(Req) of
+		{ok, Body, R2} ->
+			P2 = profile:update(jiffy:decode(Body), P),
+			construct_response(profile:to_json(P2), R2);
+		{error, Reason} ->
+			encode_response(400, {error, Reason}, Req)
 	end.
 
-error_response(Code, Resp, Req) ->
-	{ok, Req2} = cowboy_req:reply(
+encode_response(Code, Resp, Req) ->
+	construct_response(Code, jiffy:encode(Resp), Req).
+
+construct_response(Json, Req) -> 
+	construct_response(200, Json, Req).
+
+construct_response(Code, Json, Req) ->
+	{ok, R2} = cowboy_req:reply(
 			Code,
 			[{<<"content-type">>, <<"application/json">>}],
-			jiffy:encode({Resp}),
+			Json,
 			Req),
-	Req2.
+	R2.

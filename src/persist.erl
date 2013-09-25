@@ -31,7 +31,6 @@ save(Key, Value) -> save(?DEFAULT_PREFIX, Key, Value).
 
 load(Prefix, Key) ->
 	KB = affix(Prefix, Key),
-	lager:debug("AFF ~p", [KB]),
 	gen_server:call(mod_name(), {get_value, KB}).
 
 load(Key) -> load(?DEFAULT_PREFIX, Key).
@@ -39,7 +38,6 @@ load(Key) -> load(?DEFAULT_PREFIX, Key).
 affix(Prefix, Key) -> [Prefix, ?SEP, Key].
 
 init([]) ->
-	lager:debug("init persist"),
 	{ok, Redis} = eredis:start_link(),
 	{ok, Redis}.
 

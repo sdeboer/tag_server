@@ -53,7 +53,6 @@ save(P) ->
 	P.
 
 find_by_session(SID) ->
-	lager:debug("find_by"),
 	case persist:load([?PREFIX, ?SESSION_AFFIX], SID) of
 		undefined -> undefined;
 		PID -> find(PID)

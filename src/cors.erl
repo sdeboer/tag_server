@@ -11,7 +11,11 @@ execute(Req, Env) ->
 	R4 = cowboy_req:set_resp_header(<<"Access-Control-Allow-Headers">>, <<"Content-Type, Authorization, X-Requested-With, Accept, Origin">>, R3),
 	R5 = cowboy_req:set_resp_header(<<"Access-Control-Max-Age">>, <<"1000">>, R4),
 	R6 = cowboy_req:set_resp_header(<<"Access-Control-Allow-Credentials">>, <<"true">>, R5),
-	{ok, R6, Env}.
+
+	case cowboy_req:method(Req) of
+		{<<"OPTIONS">>, _} -> {halt, R6};
+		_M -> {ok, R6, Env}
+	end.
 
 allow_origin() ->
 	% And this could probably be DRY'd into the tag_server_app

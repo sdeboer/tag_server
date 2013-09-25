@@ -14,7 +14,8 @@ execute(Req, Env) ->
 			% used within Rails with the secret key.
 			{Host, _} = cowboy_req:host(Req),
 			UUID = uuid:to_string(uuid:uuid3(dns, Host)),
-			Req2 = cowboy_req:set_resp_cookie(Name, UUID, [], Req),
+			Opts = [{domain, "localhost"}],
+			Req2 = cowboy_req:set_resp_cookie(Name, UUID, Opts, Req),
 			{ok, Req2, Env};
 		{_UUID, _} ->
 			% FIXME cont'd and then we need to confirm that we still

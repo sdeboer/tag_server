@@ -3,7 +3,7 @@
 -behaviour(application).
 -export([start/2, stop/1]).
 
--define(C_ACCEPTORS, 100).
+-define(C_ACCEPTORS, 5).
 
 start(normal, _StartArgs) ->
 	PortOpts = [{port, port()}],
