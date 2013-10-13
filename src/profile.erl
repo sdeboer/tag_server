@@ -11,7 +11,8 @@
 	handle/1, handle/2,
 	origin/2,
 	coords/1, coords/2,
-	to_json/1
+	to_json/1,
+	update/2
 	]).
 
 -record(profile,
@@ -51,6 +52,20 @@ find(PID) ->
 save(P) ->
 	ok = persist:save(?PREFIX, P),
 	P.
+
+update({List}, P) ->
+	lager:debug("UPDAT ~p", [List]),
+	case proplists:get_value(<<"handle">>, List) of
+		undefined -> P;
+		Handle when is_bitstring(Handle) ->
+			P2 = handle(P, Handle),
+			PID = id(P2),
+			ok = persist:save(?PREFIX, PID, P2),
+			P2;
+		_Handle -> P
+	end.
+
+
 
 find_by_session(SID) ->
 	case persist:load([?PREFIX, ?SESSION_AFFIX], SID) of

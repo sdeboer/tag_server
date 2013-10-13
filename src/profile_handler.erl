@@ -25,6 +25,7 @@ init({tcp, http}, _Req, _Opts) ->
 
 rest_init(Req, _RouteOpts) ->
 	SID = sessions:uuid(Req),
+	lager:debug("SES ~p", [SID]),
 	Observer = profile:find_or_create_by_session(SID),
 	OID = profile:id(Observer),
 	View = case cowboy_req:binding(profile_id, Req, undefined) of
@@ -80,6 +81,7 @@ alter_profile(Req, S) ->
 	lager:debug("AP"),
 	case cowboy_req:body(Req) of
 		{ok, Body, R2} ->
+			lager:debug("OTU ~p", [Body]),
 			P2 = profile:update(jiffy:decode(Body), P),
 			construct_response(profile:to_json(P2), R2);
 		{error, Reason} ->
