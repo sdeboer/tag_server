@@ -25,7 +25,6 @@ init({tcp, http}, _Req, _Opts) ->
 
 rest_init(Req, _RouteOpts) ->
 	SID = sessions:uuid(Req),
-	lager:debug("SES ~p", [SID]),
 	Observer = profile:find_or_create_by_session(SID),
 	OID = profile:id(Observer),
 	View = case cowboy_req:binding(profile_id, Req, undefined) of
@@ -58,7 +57,6 @@ content_types_provided(Req, State) ->
 			], Req, State}.
 
 to_json(Req, S) ->
-	lager:debug("TO"),
 	Prof = case S#state.viewing of
 		undefined -> S#state.observer;
 		P -> P
@@ -78,26 +76,26 @@ return_json(Json, Req, S) ->
 
 alter_profile(Req, S) ->
 	P = S#state.observer,
-	lager:debug("AP"),
 	case cowboy_req:body(Req) of
 		{ok, Body, R2} ->
-			lager:debug("OTU ~p", [Body]),
 			P2 = profile:update(jiffy:decode(Body), P),
-			construct_response(profile:to_json(P2), R2);
+			construct_response(profile:to_json(P2), R2, S);
 		{error, Reason} ->
-			encode_response(400, {error, Reason}, Req)
+			encode_response({error, Reason}, Req, S, 400)
 	end.
 
-encode_response(Code, Resp, Req) ->
-	construct_response(Code, jiffy:encode(Resp), Req).
+%encode_response(Resp, Req, State) -> construct_response(jiffy:encode(Resp), Req, State).
 
-construct_response(Json, Req) -> 
-	construct_response(200, Json, Req).
+encode_response(Resp, Req, Code, State) ->
+	construct_response(jiffy:encode(Resp), Req, Code, State).
 
-construct_response(Code, Json, Req) ->
+construct_response(Json, Req, State) ->
+	construct_response(Json, Req, State, 200).
+
+construct_response(Json, Req, State, Code) ->
 	{ok, R2} = cowboy_req:reply(
 			Code,
 			[{<<"content-type">>, <<"application/json">>}],
 			Json,
 			Req),
-	R2.
+	{halt, R2, State}.
