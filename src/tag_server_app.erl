@@ -24,7 +24,7 @@ routes() ->
 		[{'_',
 				[
 					{"/profile/[:profile_id]", profile_handler, []},
-					%{"/ws", ws_handler, []},
+					{"/ws", ws_handler, []},
 					{"/static/[...]", cowboy_static, [
 							{directory, {priv_dir, tag_server, [<<"static">>]}}
 							%{mimetypes, {fun mimetypes:path_to_mimes/2, default}}

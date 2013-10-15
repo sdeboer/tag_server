@@ -9,20 +9,20 @@
 	]).
 
 init({tcp, http}, Req, _RouteOpts) ->
-	lager:info("Request: ~p", [Req]),
+	lager:debug("WS Request: ~p", [Req]),
 	{upgrade, protocol, cowboy_websocket}.
 
 websocket_init(_Transport, Req, _RouteOpts) ->
-	lager:info("New Client"),
+	lager:debug("WS Client"),
 	erlang:start_timer(1000, self(), <<"Hi!">>),
 	Req2 = cowboy_req:compact(Req),
 	{ok, Req2, undefined_state, hibernate}.
 
 % Called when text message arrives
 websocket_handle({text, Msg}, Req, State) ->
-	lager:info("Received: ~p", [Msg]),
+	lager:debug("WS Rec: ~p", [Msg]),
 	{reply,
-		{text, <<"Responding to ", Msg/binary>>},
+		{text, <<Msg/binary>>},
 		Req, State};
 
 % For any other type of content that gets sent
@@ -32,6 +32,7 @@ websocket_handle(_Data, Req, State) ->
 websocket_info({timeout, _Ref, Msg}, Req, State) ->
 	erlang:start_timer(1000, self(), <<"May I have blag??">>),
 	{reply, {text, Msg}, Req, State, hibernate};
+
 websocket_info(_Info, Req, State) ->
 	{ok, Req, State}.
 
