@@ -31,16 +31,16 @@ id(P) ->
 handle(P) ->
 	P#profile.handle.
 
-handle(P, New) ->
+handle(New, P) ->
 	P#profile{handle = New}.
 
-origin(P, New) ->
+origin(New, P) ->
 	P#profile{origin = New}.
 
 coords(P) ->
 	P#profile.coords.
 
-coords(P, New) ->
+coords(New, P) ->
 	P#profile{coords = New}.
 
 find(PID) ->
