@@ -24,8 +24,8 @@ init({tcp, http}, _Req, _Opts) ->
 	{upgrade, protocol, cowboy_rest}.
 
 rest_init(Req, _RouteOpts) ->
-	SID = sessions:uuid(Req),
-	Observer = profile:find_or_create_by_session(SID),
+	{ok, SID} = sessions:uuid(Req),
+	{ok, Observer} = profile:find_or_create_by_session(SID),
 	OID = profile:id(Observer),
 	View = case cowboy_req:binding(profile_id, Req, undefined) of
 		{undefined, _Req} ->

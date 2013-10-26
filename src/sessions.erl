@@ -24,8 +24,8 @@ execute(Req, Env) ->
 	end.
 
 uuid(Req) ->
-	{Val, _} = cowboy_req:cookie(session_name(), Req, undefined),
-	Val.
+	{Val, _R2} = cowboy_req:cookie(session_name(), Req, undefined),
+	{ok, Val}.
 
 session_name() ->
 	% Is this expensive enough that it should be memoizing the

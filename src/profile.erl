@@ -58,7 +58,7 @@ update({List}, P) ->
 	case proplists:get_value(<<"handle">>, List) of
 		undefined -> P;
 		Handle when is_bitstring(Handle) ->
-			P2 = handle(P, Handle),
+			P2 = handle(Handle, P),
 			PID = id(P2),
 			ok = persist:save(?PREFIX, PID, P2),
 			P2;
@@ -70,14 +70,15 @@ update({List}, P) ->
 find_by_session(SID) ->
 	case persist:load([?PREFIX, ?SESSION_AFFIX], SID) of
 		undefined -> undefined;
-		PID -> find(PID)
+		PID -> {ok, find(PID)}
 	end.
 
 find_or_create_by_session(SID) ->
-	case find_by_session(SID) of
+	P2 = case find_by_session(SID) of
 		undefined -> create(SID);
 		P -> P
-	end.
+	end,
+	{ok, P2}.
 
 create(SID) ->
 	lager:debug("Creating"),
