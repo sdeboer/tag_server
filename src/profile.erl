@@ -1,7 +1,7 @@
 -module(profile).
 
 -export([
-	find/1, find_by_session/1,
+	find/1, find_by_session/1, find_by_request/1,
 	find_or_create_by_session/1,
 	save/1
 	]).
@@ -65,23 +65,24 @@ update({List}, P) ->
 		_Handle -> P
 	end.
 
-
-
 find_by_session(SID) ->
 	case persist:load([?PREFIX, ?SESSION_AFFIX], SID) of
 		undefined -> undefined;
 		PID -> {ok, find(PID)}
 	end.
 
+find_by_request(Req) ->
+	{ok, SID} = sessions:uuid(Req),
+	find_by_session(SID).
+
 find_or_create_by_session(SID) ->
-	P2 = case find_by_session(SID) of
+	case find_by_session(SID) of
 		undefined -> create(SID);
-		P -> P
-	end,
-	{ok, P2}.
+		{ok, P} -> {ok, P}
+	end.
 
 create(SID) ->
-	lager:debug("Creating"),
+	lager:debug("Creating for ~p", [SID]),
 	PID = list_to_binary(uuid:to_string(uuid:uuid4())),
 	P = #profile{ id = PID },
 	ok = persist:save(?PREFIX, PID, P),

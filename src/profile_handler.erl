@@ -27,7 +27,7 @@ rest_init(Req, _RouteOpts) ->
 	{ok, SID} = sessions:uuid(Req),
 	{ok, Observer} = profile:find_or_create_by_session(SID),
 	OID = profile:id(Observer),
-	View = case cowboy_req:binding(profile_id, Req, undefined) of
+	View = case cowboy_req:binding(profile_id, Req) of
 		{undefined, _Req} ->
 			undefined;
 		{ProfileId, _Req} when OID == ProfileId ->
@@ -56,6 +56,16 @@ content_types_provided(Req, State) ->
 			{<<"text/plain">>, to_json}
 			], Req, State}.
 
+alter_profile(Req, S) ->
+	P = S#state.observer,
+	case cowboy_req:body(Req) of
+		{ok, Body, R2} ->
+			P2 = profile:update(jiffy:decode(Body), P),
+			json_handler:construct_response(profile:to_json(P2), R2, S);
+		{error, Reason} ->
+			json_handler:encode_response({error, Reason}, Req, S, 400)
+	end.
+
 to_json(Req, S) ->
 	Prof = case S#state.viewing of
 		undefined -> S#state.observer;
@@ -64,38 +74,5 @@ to_json(Req, S) ->
 
 	Json = profile:to_json(Prof),
 
-	return_json(Json, Req, S).
+	json_handler:return_json(Json, Req, S).
 
-return_json(Json, Req, S) ->
-	Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
-		{undefined, _Req2} -> Json;
-		{Fn, _Req2} ->
-			[Fn, <<"(">>, Json, <<");">>]
-	end,
-	{Resp, Req, S}.
-
-alter_profile(Req, S) ->
-	P = S#state.observer,
-	case cowboy_req:body(Req) of
-		{ok, Body, R2} ->
-			P2 = profile:update(jiffy:decode(Body), P),
-			construct_response(profile:to_json(P2), R2, S);
-		{error, Reason} ->
-			encode_response({error, Reason}, Req, S, 400)
-	end.
-
-%encode_response(Resp, Req, State) -> construct_response(jiffy:encode(Resp), Req, State).
-
-encode_response(Resp, Req, Code, State) ->
-	construct_response(jiffy:encode(Resp), Req, Code, State).
-
-construct_response(Json, Req, State) ->
-	construct_response(Json, Req, State, 200).
-
-construct_response(Json, Req, State, Code) ->
-	{ok, R2} = cowboy_req:reply(
-			Code,
-			[{<<"content-type">>, <<"application/json">>}],
-			Json,
-			Req),
-	{halt, R2, State}.
