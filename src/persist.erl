@@ -12,6 +12,11 @@
 -export([save/2, save/3,
 	load/1, load/2]).
 
+% Key API
+-export([
+	del/1, exists/1
+	]).
+
 % Set API
 -export([
 	set/1,
@@ -33,6 +38,14 @@ start_link() ->
 mod_name()->
 	% Why does ?MODULE not just work?  Why global?
 	global:whereis_name(?MODULE).
+
+% Keys
+del(K) ->
+	K2 = if is_list(K) -> K; true -> [K] end,
+	gen_server:call(mod_name(), {command, ["DEL" | K2]}).
+
+exists(K)->
+	gen_server:call(mod_name(), {command, ["EXISTS", K]}).
 
 % Models
 save(Prefix, Key, Value) ->
