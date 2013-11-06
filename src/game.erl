@@ -2,8 +2,8 @@
 
 -export([
 	find/1,
-	create/2,
-	list/2, list/3
+	create/2
+	%list/1, list/2, list/3
 	]).
 
 -export([
@@ -50,10 +50,10 @@ type(G) -> G#game.type.
 
 state(G) -> G#game.state.
 
-list(GT, GS) ->
-	[].
+% list(Player) -> list(undefined, undefined, Player).
 
-list(GT, GS, Player) ->
-	[].
+% list(GT, GS) -> [].
+
+% list(GT, GS, Player) -> [].
 
 to_json(G) -> jiffy:encode(G).

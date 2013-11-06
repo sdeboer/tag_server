@@ -12,6 +12,18 @@
 -export([save/2, save/3,
 	load/1, load/2]).
 
+% Set API
+-export([
+	set/1,
+	deset/1,
+	add/2, pop/1
+	%remove/2,
+	%members/1, ismember/2, size/1,
+	%range/3,
+	%intersection/1, interstore/2,
+	%union/1, unionstore/2
+	]).
+
 -define(DEFAULT_PREFIX, "tag").
 -define(SEP, ":").
 
@@ -22,6 +34,7 @@ mod_name()->
 	% Why does ?MODULE not just work?  Why global?
 	global:whereis_name(?MODULE).
 
+% Models
 save(Prefix, Key, Value) ->
 	gen_server:call(mod_name(),
 		{save_value, affix(Prefix, Key), Value}
@@ -34,6 +47,36 @@ load(Prefix, Key) ->
 	gen_server:call(mod_name(), {get_value, KB}).
 
 load(Key) -> load(?DEFAULT_PREFIX, Key).
+
+% Sets
+-record(set, { key, values = [], persisted = false, dirty = true }).
+
+set(K) ->
+  #set{key=K}.
+
+deset(Set) when is_record(Set, set)->
+	if
+		Set#set.persisted ->
+			% remove it
+			Set#set{persisted = false, dirty = true};
+		true ->
+			%nop
+			{ok, Set}
+	end.
+
+add(V, S) ->
+	V2 = if is_list(V) -> V; true -> [V] end,
+	AddRes = gen_server:call(mod_name(),
+		{command, ["SADD", S#set.key | V2]}),
+	S2 = S#set{persisted = true,
+			values = lists:append(V2, S#set.values)},
+	lager:debug("Add Result ~p", [AddRes]),
+	S2.
+
+pop(S) ->
+	V = gen_server:call(mod_name(),
+		{command, ["SPOP", S#set.key]}),
+	lager:debug("Pop returned ~p", [V]).
 
 affix(Prefix, Key) -> [Prefix, ?SEP, Key].
 
@@ -55,6 +98,11 @@ handle_call({save_value, Key, Value}, _From, Redis) ->
 	lager:debug("Saving ~p / ~p", [Key, Value]),
 	{ok, <<"OK">>} = eredis:q(Redis, ["SET", Key, Value]),
 	{reply, ok, Redis};
+
+handle_call({command, List}, _From, Redis) ->
+	lager:debug("Command ~p", [List]),
+	{ok, Value} = eredis:q(Redis, List),
+	{reply, Value, Redis};
 
 handle_call(_Message, _From, Redis) ->
 	{reply, error, Redis}.
