@@ -22,7 +22,7 @@
 		origin = undefined,
 		coords = undefined}).
 
--define(PREFIX, <<"profile">>).
+-define(PREFIX, ?MODULE_STRING).
 -define(SESSION_AFFIX, <<"_session">>).
 
 id(P) ->

@@ -21,7 +21,7 @@
 		type = undefined
 		}).
 
--define(PREFIX, ?MODULE).
+-define(PREFIX, ?MODULE_STRING).
 
 find(GID) ->
 	case persist:load(?PREFIX, GID) of
