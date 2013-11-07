@@ -10,6 +10,7 @@ start() ->
 	ok = application:start(lager),
 	ok = application:start(crypto),
 	ok = application:start(ranch),
+	ok = application:start(cowlib),
 	ok = application:start(cowboy),
 	ok = application:start(tag_server),
 	lager:info("tag_server started"),

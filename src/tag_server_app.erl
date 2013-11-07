@@ -11,8 +11,17 @@ start(normal, _StartArgs) ->
 			{env, [{dispatch, routes()}]},
 			{middlewares, [cowboy_router, cors, sessions, cowboy_handler]}
 			],
-	{ok, _RefId} = cowboy:start_http(http, ?C_ACCEPTORS, PortOpts, ProtoOpts),
-	tag_server_sup:start_link().
+
+	case cowboy:start_http(http, ?C_ACCEPTORS, PortOpts, ProtoOpts) of
+		{ok, _CowboyPid} ->
+			tag_server_sup:start_link();
+		{error, Report} ->
+			lager:error("!! Critical error starting http : ~p", [Report]),
+			% Ideally this should actually stop the whole thing....but
+			% we want the error messages and returning anything but {ok, pid()}
+			% here causes the badmatch error to occur before logs are written
+			{ok, self()}
+	end.
 
 stop(_State) ->
 	ok.
