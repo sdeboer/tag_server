@@ -50,7 +50,7 @@ find(PID) ->
 	end.
 
 save(P) ->
-	ok = persist:save(?PREFIX, P),
+	ok = persist:save(?PREFIX, id(P), P),
 	P.
 
 update({List}, P) ->
