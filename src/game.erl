@@ -111,7 +111,7 @@ list(GT, GS, P) ->
 	Gids = persist:intersection(
 			[
 				persist:set([?STATE_PREFIX, GS]),
-				persist:state([?TYPE_PREFIX, GT])
+				persist:set([?TYPE_PREFIX, GT])
 				]
 			),
 	filter_player(Gids, P).
