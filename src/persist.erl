@@ -124,7 +124,7 @@ items(S) ->
 
 -record(set, { key, persisted = false, dirty = true }).
 
-set(K) -> #set{key = K}.
+set(K) -> {ok, #set{key = K}}.
 
 deset(S) when is_record(S, set) ->
 	del(S#set.key),
@@ -136,22 +136,24 @@ deset(K) ->
 
 add(List, S) ->
 	command(["SADD", S#set.key | List]),
-	S#set{ persisted = true }.
+	{ok, S#set{ persisted = true }}.
 
 remove(List, S) ->
-	command(["SREM", S#set.key | List]).
+	command(["SREM", S#set.key | List]),
+	{ok, S}.
 
 contains(Item, S) ->
-	case command(["SISMEMBER", S#set.key, Item]) of
+	R = case command(["SISMEMBER", S#set.key, Item]) of
 		<<"1">> -> true;
 		<<"0">> -> false
-	end.
+	end,
+	{R, S}.
 
 members(S) ->
-	command(["SMEMBERS", S#set.key]).
+	{command(["SMEMBERS", S#set.key]), S}.
 
 cardinality(S) ->
-	command(["SCARD", S#set.key]).
+	{command(["SCARD", S#set.key]), S}.
 
 card(S) -> cardinality(S).
 

@@ -3,7 +3,8 @@
 -export([
 	find/1,
 	create/2,
-	list/1, list/2, list/3
+	list/1, list/2, list/3,
+	all/3
 	]).
 
 -export([
@@ -90,49 +91,21 @@ players(G) ->
 owner(G) ->
 	player:find(G#game.meta#meta.owner).
 
-list(Player) -> list(undefined, undefined, Player).
+list(Pl) -> list([], [], Pl).
 
-list(GT, GS) -> list(GT, GS, undefined).
+list(Tl, Sl) -> list(Tl, Sl, []).
 
-list(undefined, undefined, undefined) -> [];
+list(Tl, Sl, Pl) ->
+	persist:intersection(key_list(Tl, Sl, Pl)).
 
-list(undefined, undefined, Player) ->
-	lists:map(find, player_gids(Player));
+all(Tl, Sl, Pl) ->
+	persist:union(key_list(Tl, Sl, Pl)).
 
-list(undefined, GS, P) ->
-	Gids = persist:members(persist:set([?STATE_PREFIX, GS])),
-	filter_player(Gids, P);
-
-list(GT, undefined, P) ->
-	Gids = persist:members(persist:set([?TYPE_PREFIX, GT])),
-	filter_player(Gids, P);
-
-list(GT, GS, P) ->
-	Gids = persist:intersection(
-			[
-				persist:set([?STATE_PREFIX, GS]),
-				persist:set([?TYPE_PREFIX, GT])
-				]
-			),
-	filter_player(Gids, P).
+key_list(Tl, Sl, Pl) ->
+	Tp = fun(T) -> [?TYPE_PREFIX, T] end,
+	Sp = fun(S) -> [?STATE_PREFIX, S] end,
+	Pp = fun(P) -> [?PLAYER_GAME_PREFIX, profile:id(P)] end,
+	Kl = [lists:map(Tp, Tl), lists:map(Sp, Sl), lists:map(Pp, Pl)],
+	lists:flatten(Kl).
 
 to_json(G) -> jiffy:encode(G).
-
-% Private
-
-player_gids(P) ->
-	Pid = profile:id(P),
-	persist:members(persist:set([?PLAYER_GAME_PREFIX, Pid])).
-
-filter_player(Gids, undefined) ->
-	lists:map(find, Gids);
-
-filter_player(Gids, P) ->
-	PGids = player_gids(P),
-	MG = fun(G) ->
-			C = lists:member(G, PGids),
-			if C -> {true, find(G)};
-				true -> false
-			end
-	end,
-	lists:filtermap(MG, Gids).
