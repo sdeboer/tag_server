@@ -36,7 +36,7 @@
 -define(PLAYER_GAME_PREFIX, [?PREFIX, <<"pg">>]).
 
 find(GID) ->
-	case persist:load(?META_PREFIX, GID) of
+	case persist:load([?META_PREFIX, GID]) of
 		undefined -> undefined;
 		Data ->
 			M = binary_to_term(Data),
@@ -59,7 +59,7 @@ create(GameType, Owner) ->
 			started = calendar:universal_time(),
 			type = GameType
 			},
-	ok = persist:save(?META_PREFIX, GID, M),
+	ok = persist:save([?META_PREFIX, GID], M),
 	P1 = persist:set([?PLAYERS_PREFIX, GID]),
 	P2 = persist:add([PID], P1),
 	G = #game{meta = M, players = P2},
