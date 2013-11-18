@@ -38,26 +38,27 @@ rest_init(Req, _RouteOpts) ->
 	{ok, Req, S2}.
 
 list_games(Req, S) ->
-	GS = case cowboy_req:qs_val(game_state, Req) of
-		{undefined, _R} -> any;
-		{<<"open">>, _R} -> open;
-		{<<"running">>, _R} -> running;
-		{<<"finished">>, _R} -> finished;
-		{<<"any">>, _R} -> any
+	GS = case cowboy_req:qs_val(<<"game_state">>, Req) of
+		{undefined, _R} -> [<<"open">>];
+		{<<"any">>, _R} -> [];
+		{S, _R} -> [S]
 	end,
 
-	GT = case cowboy_req:qs_val(game_type, Req) of
-		{undefined, _R2} -> any;
-		{_GT, _R2} -> robot
+	GT = case cowboy_req:qs_val(<<"game_type">>, Req) of
+		{undefined, _R2} -> [<<"robot">>];
+		{GT1, _R2} ->
+			% need to separate commas
+			[GT1]
 	end,
 
-	List = case cowboy_req:qs_val(mine, Req) of
+	List = case cowboy_req:qs_val(<<"mine">>, Req) of
 		{<<"true">>, _R3} -> 
-			game:list(GT, GS, S#state.observer);
+			game:list(GT, GS, [profile:id(S#state.observer)]);
 		{_V, _R3} -> 
 			game:list(GT, GS)
 	end,
 
+	lager:debug("List ~p", [List]),
 	S#state{list = List}.
 
 allowed_methods(Req, State) ->

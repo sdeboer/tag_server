@@ -101,11 +101,23 @@ list(Tl, Sl, Pl) ->
 all(Tl, Sl, Pl) ->
 	persist:union(key_list(Tl, Sl, Pl)).
 
+key_list_to_set (Prefix, L)->
+	Lp = fun(K) ->
+			{ok, S} = persist:set([Prefix, K]),
+			S
+	end,
+	lists:map(Lp, L).
+
+key_list([], [], Pl) ->
+	key_list([<<"ellipse">>], [], Pl);
+
 key_list(Tl, Sl, Pl) ->
-	Tp = fun(T) -> [?TYPE_PREFIX, T] end,
-	Sp = fun(S) -> [?STATE_PREFIX, S] end,
-	Pp = fun(P) -> [?PLAYER_GAME_PREFIX, profile:id(P)] end,
-	Kl = [lists:map(Tp, Tl), lists:map(Sp, Sl), lists:map(Pp, Pl)],
+	lager:debug("kl ~p", [Tl]),
+	Kl = [
+		key_list_to_set(?TYPE_PREFIX, Tl),
+		key_list_to_set(?STATE_PREFIX, Sl),
+		key_list_to_set(?PLAYER_GAME_PREFIX, Pl)
+		],
 	lists:flatten(Kl).
 
 to_json(G) -> jiffy:encode(G).
