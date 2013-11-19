@@ -33,7 +33,8 @@ routes() ->
 		[{'_',
 				[
 					{"/profile/[:profile_id]", profile_handler, []},
-					{"/game/[:game_id]", game_handler, []},
+					{"/game/:game_id", game_handler, []},
+					{"/game", game_list_handler, []},
 					{"/ws", ws_handler, []}
 					%{"/static/[...]", cowboy_static, [
 					%		{directory, {priv_dir, tag_server, [<<"static">>]}}

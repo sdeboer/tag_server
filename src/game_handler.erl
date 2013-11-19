@@ -17,8 +17,7 @@
 
 -record(state, {
 		observer = null,
-		game = null,
-		list = null
+		game = null
 		}).
 
 init({tcp, http}, _Req, _Opts) ->
@@ -26,39 +25,14 @@ init({tcp, http}, _Req, _Opts) ->
 
 rest_init(Req, _RouteOpts) ->
 	{ok, P} = profile:find_by_request(Req),
-	S = #state{observer = P},
 
-	S2 = case cowboy_req:binding(game_id, Req) of
-		{undefined, R2} ->
-			list_games(R2, S);
-		{GID, _R} -> 
-			S#state{game = game:find(GID)}
+	{GID, _R} = cowboy_req:binding(game_id, Req),
+	G = case game:find(GID) of
+		undefined -> null;
+		G2 -> G2
 	end,
 
-	{ok, Req, S2}.
-
-list_games(Req, S) ->
-	GS = case cowboy_req:qs_val(<<"game_state">>, Req) of
-		{undefined, _R} -> [<<"open">>];
-		{<<"any">>, _R} -> [];
-		{S, _R} -> [S]
-	end,
-
-	GT = case cowboy_req:qs_val(<<"game_type">>, Req) of
-		{undefined, _R2} -> [<<"robot">>];
-		{GT1, _R2} ->
-			% need to separate commas
-			[GT1]
-	end,
-
-	List = case cowboy_req:qs_val(<<"mine">>, Req) of
-		{<<"true">>, _R3} -> 
-			game:list(GT, GS, [profile:id(S#state.observer)]);
-		{_V, _R3} -> 
-			game:list(GT, GS)
-	end,
-
-	S#state{list = List}.
+	{ok, Req, #state{game = G, observer = P}}.
 
 allowed_methods(Req, State) ->
 	{
@@ -81,8 +55,5 @@ alter_game(Req, S) ->
 	{halt, Req, S}.
 
 to_json(Req, S) ->
-	Json = case S#state.list of
-		null -> game:to_json(S#state.game);
-		L -> jiffy:encode(L)
-	end,
+	Json = game:to_json(S#state.game),
 	json_handler:return_json(Json, Req, S).
