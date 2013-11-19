@@ -112,7 +112,6 @@ key_list([], [], Pl) ->
 	key_list([<<"ellipse">>], [], Pl);
 
 key_list(Tl, Sl, Pl) ->
-	lager:debug("kl ~p", [Tl]),
 	Kl = [
 		key_list_to_set(?TYPE_PREFIX, Tl),
 		key_list_to_set(?STATE_PREFIX, Sl),

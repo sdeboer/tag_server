@@ -48,10 +48,10 @@ mod_name()->
 
 % Keys
 del(K) ->
-	cmmd(["DEL", K]).
+	command(["DEL", K]).
 
 exists(K)->
-	cmmd(["EXISTS", K]).
+	command(["EXISTS", K]).
 
 % Models
 save(Key, Value) ->
@@ -78,46 +78,45 @@ delist(K) ->
 push([], S) -> S;
 
 push(List, S) ->
-	cmmd(["RPUSH", S#list.key | List]),
+	command(["RPUSH", S#list.key | List]),
 	S#list{ persisted = true }.
 
 unshift([], L) -> L;
 
 unshift(List, S) ->
-	cmmd(["LPUSH", S#list.key | List]),
+	command(["LPUSH", S#list.key | List]),
 	S#list{ persisted = true }.
 
 pop(L) ->
 	% check undefined (empty list)
-	V = cmmd(["LPOP", L#list.key]),
+	V = command(["LPOP", L#list.key]),
 	{V, L}.
 
 pop(N, L)->
-	Vs = cmmd(["LRANGE", L#list.key, 0, N - 1]),
+	Vs = command(["LRANGE", L#list.key, 0, N - 1]),
 	Len = length(Vs),
 	if Len > 0 -> 
-			cmmd(["LREM", L#list.key, Len]);
+			command(["LREM", L#list.key, Len]);
 		true -> nop
 	end,
 	{Vs, L}.
 
 shift(S) ->
 	% check undefined (empty list)
-	V = cmmd(["RPOP", S#list.key]),
+	V = command(["RPOP", S#list.key]),
 	{V, S}.
 
 shift(N, L)->
-	Vs = cmmd(["RRANGE", L#list.key, 0, N -1]),
+	Vs = command(["RRANGE", L#list.key, 0, N -1]),
 	Len = length(Vs),
 	if Len > 0 -> 
-			cmmd(["RREM", L#list.key, Len]);
+			command(["RREM", L#list.key, Len]);
 		true -> nop
 	end,
 	{Vs, L}.
 
 items(S) ->
-	V = cmmd(["LRANGE", S#list.key, 0, -1]),
-	lager:debug("MEMBERS ~p", [V]),
+	V = command(["LRANGE", S#list.key, 0, -1]),
 	{V, S#list{persisted = true, dirty = false} }.
 
 % Sets
@@ -135,25 +134,25 @@ deset(K) ->
 	{ok, #set{key = K}}.
 
 add(List, S) ->
-	cmmd(["SADD", S#set.key | List]),
+	command(["SADD", S#set.key | List]),
 	{ok, S#set{ persisted = true }}.
 
 remove(List, S) ->
-	cmmd(["SREM", S#set.key | List]),
+	command(["SREM", S#set.key | List]),
 	{ok, S}.
 
 contains(Item, S) ->
-	R = case cmmd(["SISMEMBER", S#set.key, Item]) of
+	R = case command(["SISMEMBER", S#set.key, Item]) of
 		<<"1">> -> true;
 		<<"0">> -> false
 	end,
 	{R, S}.
 
 members(S) ->
-	{cmmd(["SMEMBERS", S#set.key]), S}.
+	{command(["SMEMBERS", S#set.key]), S}.
 
 cardinality(S) ->
-	{cmmd(["SCARD", S#set.key]), S}.
+	{command(["SCARD", S#set.key]), S}.
 
 card(S) -> cardinality(S).
 
@@ -161,23 +160,20 @@ keylist(SList) ->
 	lists:map(fun(S) -> S#set.key end, SList).
 
 intersection(SList) ->
-	lager:debug("SL ~p", [SList]),
-	R = cmmd(["SINTER" | keylist(SList)]),
-	lager:debug("RR ~p", [R]),
-	R.
+	command(["SINTER" | keylist(SList)]).
 
 interstore(Dest, SList) when is_record(Dest, set) ->
-	cmmd(["SINTERSTORE", Dest#set.key, keylist(SList)]),
+	command(["SINTERSTORE", Dest#set.key, keylist(SList)]),
 	Dest#set{persisted = true};
 
 interstore(DK, SList) ->
 	interstore(#set{key = DK}, SList).
 
 union(SList) ->
-	cmmd(["SUNION" | keylist(SList)]).
+	command(["SUNION" | keylist(SList)]).
 
 unionstore(Dest, SList) when is_record(Dest, set) ->
-	cmmd(["SUNIONSTORE", Dest#set.key | keylist(SList)]),
+	command(["SUNIONSTORE", Dest#set.key | keylist(SList)]),
 	Dest#set{persisted = true};
 
 unionstore(DK, SList) ->
@@ -193,9 +189,8 @@ stop(_Pid) ->
 stop() ->
 	gen_server:cast(mod_name(), stop).
 
-cmmd(Arg) ->
-	lager:debug("PE C ~p", [Arg]),
-	gen_server:call(mod_name(), {cmmd, Arg}).
+command(Arg) ->
+	gen_server:call(mod_name(), {command, Arg}).
 
 handle_call({get_value, Key}, _From, Redis) ->
 	{ok, Value} = eredis:q(Redis, ["GET", Key]),
@@ -206,8 +201,8 @@ handle_call({save_value, Key, Value}, _From, Redis) ->
 	{ok, <<"OK">>} = eredis:q(Redis, ["SET", Key, Value]),
 	{reply, ok, Redis};
 
-handle_call({cmmd, List}, _From, Redis) ->
-	lager:debug("cmmd ~p", [List]),
+handle_call({command, List}, _From, Redis) ->
+	lager:debug("command ~p", [List]),
 	{ok, Value} = eredis:q(Redis, List),
 	{reply, Value, Redis};
 

@@ -58,7 +58,6 @@ list_games(Req, S) ->
 			game:list(GT, GS)
 	end,
 
-	lager:debug("List ~p", [List]),
 	S#state{list = List}.
 
 allowed_methods(Req, State) ->
@@ -82,5 +81,8 @@ alter_game(Req, S) ->
 	{halt, Req, S}.
 
 to_json(Req, S) ->
-	Json = game:to_json(S#state.game),
+	Json = case S#state.list of
+		null -> game:to_json(S#state.game);
+		L -> jiffy:encode(L)
+	end,
 	json_handler:return_json(Json, Req, S).
