@@ -8,8 +8,8 @@
 
 return_json(Json, Req, S) ->
 	Resp = case cowboy_req:qs_val(<<"jsonp">>, Req) of
-		{undefined, _Req2} -> Json;
-		{Fn, _Req2} ->
+		{undefined, _R} -> Json;
+		{Fn, _R} ->
 			[Fn, <<"(">>, Json, <<");">>]
 	end,
 	{Resp, Req, S}.

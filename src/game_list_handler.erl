@@ -5,12 +5,15 @@
 % Rest Standards
 -export([
 	rest_init/2,
-	content_types_provided/2,
+	content_types_provided/2, content_types_accepted/2,
 	allowed_methods/2
 	]).
 
 % Callbacks
--export([ to_json/2 ]).
+-export([
+	to_json/2,
+	create_game/2
+	]).
 
 -record(state, { list }).
 
@@ -44,7 +47,7 @@ list_games(Req) ->
 	end.
 
 allowed_methods(Req, State) ->
-	{ [<<"GET">>], Req, State}.
+	{ [<<"GET">>, <<"POST">>], Req, State}.
 
 content_types_provided(Req, State) ->
 	{[
@@ -52,6 +55,23 @@ content_types_provided(Req, State) ->
 			{<<"text/html">>, to_json},
 			{<<"text/plain">>, to_json}
 			], Req, State}.
+
+content_types_accepted(Req, State) ->
+	{[
+			{{<<"application">>, <<"json">>, '*'}, create_game}
+			], Req, State}.
+
+create_game(Req, State) ->
+	case cowboy_req:body(Req) of
+		{ok, B, R2} ->
+			{Body} = jiffy:decode(B),
+			Gt = proplists:get_value(<<"game_type">>, Body),
+			{ok, P} = profile:find_by_request(Req),
+			Gm = game:create(Gt, P),
+			json_handler:construct_response(game:to_json(Gm), R2, State);
+		{error, Reason} ->
+			json_handler:encode_response({error, Reason}, Req, State, 400)
+	end.
 
 to_json(Req, S) ->
 	Json = jiffy:encode(S#state.list),
