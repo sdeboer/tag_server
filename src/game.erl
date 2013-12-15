@@ -24,7 +24,7 @@
 		}).
 
 -record(game, {
-		players,
+		players = [],
 		meta
 		}).
 
@@ -34,6 +34,14 @@
 -define(PLAYERS_PREFIX, [?PREFIX, <<"p">>]).
 -define(STATE_PREFIX, [?PREFIX, <<"s">>]).
 -define(PLAYER_GAME_PREFIX, [?PREFIX, <<"pg">>]).
+
+-define(R2P(Record),
+	record_to_proplist(#Record{} = Rec) ->
+	lists:zip(
+	record_info(fields, Record), tl(tuple_to_list(Rec))
+	)).
+
+?R2P(meta).
 
 find(GID) ->
 	case persist:load([?META_PREFIX, GID]) of
@@ -50,7 +58,7 @@ create(GameType, Owner) ->
 	GID = list_to_binary(uuid:to_string(uuid:uuid4())),
 	PID = profile:id(Owner),
 	lager:debug("Creating Game for ~p : ~p : ~p", [GID, GameType, PID]),
-	State = open,
+	State = <<"open">>,
 	M = #meta{
 			id = GID,
 			owner = PID,
@@ -60,17 +68,18 @@ create(GameType, Owner) ->
 			type = GameType
 			},
 	ok = persist:save([?META_PREFIX, GID], M),
-	P1 = persist:set([?PLAYERS_PREFIX, GID]),
-	P2 = persist:add([PID], P1),
-	G = #game{meta = M, players = P2},
+	{ok, P1} = persist:set([?PLAYERS_PREFIX, GID]),
+	persist:add([PID], P1),
 
-	Pl1 = persist:set([?PLAYER_GAME_PREFIX, PID]),
+	G = #game{meta = M, players = [PID]},
+
+	{ok, Pl1} = persist:set([?PLAYER_GAME_PREFIX, PID]),
 	persist:add([GID], Pl1),
 
-	T1 = persist:set([?TYPE_PREFIX, GameType]),
+	{ok, T1} = persist:set([?TYPE_PREFIX, GameType]),
 	persist:add([GID], T1),
 
-	S1 = persist:set([?STATE_PREFIX, State]),
+	{ok, S1} = persist:set([?STATE_PREFIX, State]),
 	persist:add([GID], S1),
 
 	G.
@@ -119,4 +128,15 @@ key_list(Tl, Sl, Pl) ->
 		],
 	lists:flatten(Kl).
 
-to_json(G) -> jiffy:encode(G).
+to_json(G) ->
+	M = G#game.meta,
+	M0 = M#meta{
+			label = lists:flatten(M#meta.label),
+			started = lists:flatten(
+				[
+					tuple_to_list(element(1, M#meta.started)),
+					tuple_to_list(element(2, M#meta.started))
+					]
+				)},
+	Data = [{players, G#game.players} | record_to_proplist(M0)],
+	jiffy:encode({Data}).
