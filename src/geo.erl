@@ -9,10 +9,11 @@
 -export([
 	degtorad/1,
 	radtodeg/1,
-	sexagesimaltodecimal/3
+	sexagesimaltodecimal/3,
+	radiusize/1
 	]).
 
--define(RADIUS, 6371.0).
+-define(RADIUS, 6371000).
 
 vector({La1, Lo1, A1}, {La2, Lo2, A2}) ->
 	Alt = (A1 + A2) / 2.0,
@@ -60,3 +61,5 @@ radtodeg(R) ->
 sexagesimaltodecimal(D, M, S) ->
 	D + (M / 60.0) + (S / 3600.0).
 
+radiusize({X, Y}) -> {X, Y, ?RADIUS};
+radiusize({X, Y, Z}) -> {X, Y, ?RADIUS + Z}.
