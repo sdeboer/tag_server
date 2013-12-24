@@ -9,7 +9,7 @@
 	code_change/3
 	]).
 
--record(details, {
+-record(state, {
 		game,
 		profile_id,
 		start,
@@ -38,7 +38,7 @@ init(Args) ->
 	St = proplists:get_value(start, Args, {0, 0, 334}),
 	SF = proplists:get_value(spiral, Args, {500, 0, 334}),
 	Sp = proplists:get_value(speed, Args, 2.0) / 1000000.0,
-	S = #details{
+	S = #state{
 			game = proplists:get_value(game, Args),
 			profile_id = proplists:get_value(profile_id, Args),
 			start = St,
@@ -69,18 +69,18 @@ handle_info(move, S) ->
 
 move_me(S) ->
 	N = now(),
-	Dt = timer:now_diff(N, S#details.stamp),
-	Dd = Dt * S#details.speed,
-	{R, W, A} = S#details.current,
+	Dt = timer:now_diff(N, S#state.stamp),
+	Dd = Dt * S#state.speed,
+	{R, W, A} = S#state.current,
 
 	NPos = if
 		% TODO should be relative to destination/start
 		% which just happens to be origin
 		R - ?TOLERANCE =< 0.0 ->
 			lager:info("Spiral Robot is resetting."),
-			S#details.spiral;
+			S#state.spiral;
 
-		S#details.spiralling ->
+		S#state.spiralling ->
 			%lager:debug("Now ~p : ~p", [Start, {R, W, A}]),
 			Dw = Dd / R,
 			%lager:debug("WHERE (~p) ~p / ~p = ~p", [A, Dd, R, Dw]),
@@ -96,9 +96,9 @@ move_me(S) ->
 			nop
 	end,
 
-	lager:debug("New Pos ~p -> ~p", [S#details.current, NPos]),
+	lager:debug("New Pos ~p -> ~p", [S#state.current, NPos]),
 	%erlang:send_after(?DELTA, self(), move),
-	{noreply, S#details{stamp = N, current = NPos}}.
+	{noreply, S#state{stamp = N, current = NPos}}.
 
 terminate(_R, _S) -> ok.
 
