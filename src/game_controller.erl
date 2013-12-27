@@ -11,30 +11,45 @@
 	]).
 
 -export([
-	update/2
+	update/3
 	]).
 
 -record(state, {
 		game_id,
-		profile_id
+		profile_id,
+		socket,
+		pubsub
 		}).
 
-start_link(Game) ->
-	gen_server:start_link(?MODULE, Game, []).
+start_link(Args) ->
+	gen_server:start_link(?MODULE, Args, []).
 
-init(Game) -> {ok, Game}.
+init(Args) ->
+	{ok, #state{
+			game_id = proplists:get_value(game_id, Args),
+			profile_id = proplists:get_value(profile_id, Args),
+			socket = proplists:get_value(socket, Args),
+			pubsub = pubsub:start_link(self())
+			}}.
 
-update(PID, Location) ->
-	gen_server:cast(self(), {location, {PID, Location}}).
+update(GC, PID, Location) ->
+	gen_server:cast(GC, {location, {PID, Location}}).
 
-handle_cast({location, _Data}, Game) ->
-	{noreply, Game};
+handle_cast({location, Data}, S) ->
+	lager:debug("GC Recv ~p", [Data]),
+	{noreply, S};
 
-handle_cast(stop, Game) -> {stop, normal, Game}.
+handle_cast(stop, S) -> {stop, normal, S}.
 
 handle_call(_R, _F, _S) -> {stop, bad_call, undefined}.
-handle_info(_I, _S) -> {stop, bad_call, undefined}.
 
-terminate(_R, _Game) -> ok.
+% TODO this needs to handle the PUBSUB -> subscription callbacks
+handle_info({message, _Ch, {geo, Geo}, _Sub}, S) ->
+	ws_handler:geo(S#state.socket, Geo),
+	pubsub:ack(pubsub).
+
+terminate(_R, S) ->
+	pubsub:stop(S#state.pubsub),
+	ok.
 
 code_change(_Old, S, _Extra) -> {ok, S}.
