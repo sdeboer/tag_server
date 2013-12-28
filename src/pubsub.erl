@@ -30,7 +30,7 @@ publish(PS, Ch, Msg) ->
 stop(PS) ->
 	gen_server:cast(PS, stop).
 
-init(Proc) ->
+init([Proc]) ->
 	{ok, Pub} = eredis:start_link(),
 	{ok, Sub} = eredis_sub:start_link(),
 	eredis_sub:controlling_process(Sub, Proc),

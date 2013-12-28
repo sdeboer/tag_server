@@ -22,14 +22,19 @@
 		}).
 
 start_link(Args) ->
+	lager:debug("Got here ~p", [Args]),
 	gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
+	lager:debug("init gc ~p", [proplists:get_value(game_id,Args)]),
+
+	{ok, PS} = supervisor:start_child(pubsub_sup, [self()]),
+
 	{ok, #state{
 			game_id = proplists:get_value(game_id, Args),
 			profile_id = proplists:get_value(profile_id, Args),
 			socket = proplists:get_value(socket, Args),
-			pubsub = pubsub:start_link(self())
+			pubsub = PS
 			}}.
 
 update(GC, PID, Location) ->
@@ -46,7 +51,7 @@ handle_call(_R, _F, _S) -> {stop, bad_call, undefined}.
 % TODO this needs to handle the PUBSUB -> subscription callbacks
 handle_info({message, _Ch, {geo, Geo}, _Sub}, S) ->
 	ws_handler:geo(S#state.socket, Geo),
-	pubsub:ack(pubsub).
+	pubsub:ack(S#state.pubsub).
 
 terminate(_R, S) ->
 	pubsub:stop(S#state.pubsub),
