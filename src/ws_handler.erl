@@ -11,6 +11,12 @@
 init({tcp, http}, _Req, _RouteOpts) ->
 	{upgrade, protocol, cowboy_websocket}.
 
+-record(state, {
+		observer,
+		subscriber,
+		game_id
+		}).
+
 websocket_init(_Transport, Req, _RouteOpts) ->
 	% erlang:start_timer(1000, self(), <<"Hi!">>),
 	{ok, SID} = sessions:uuid(Req),
@@ -20,8 +26,21 @@ websocket_init(_Transport, Req, _RouteOpts) ->
 			%self() ! [{send, null}, {type, <<"profile">>}, {message, <<"needed">>}],
 			undefined
 	end,
+
+	GID = <<"GID">>,
+	Sub = pubsub_sup:event_subscriber(GID),
+	GCProps = [
+			{game_id, GID},
+			{profile_id, profile:id(Observer)},
+			{websocket, self()}
+			],
+
+	ok = gen_event:add_sup_handler(Sub, {game_controller, GID}, GCProps),
 	Req2 = cowboy_req:compact(Req),
-	{ok, Req2, [{observer, Observer}]}.
+	{ok, Req2, #state{
+			observer = Observer,
+			subscriber = Sub,
+			game_id = GID}}.
 
 % Called when text message arrives
 websocket_handle({text, Msg}, Req, State) ->

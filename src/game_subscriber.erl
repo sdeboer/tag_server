@@ -16,7 +16,6 @@ start_link(Args) ->
 	gen_server:start_link(?MODULE, Args, []).
 
 init([Event, Ch]) ->
-	lager:debug("GS Init ~p", [Event]),
 	{ok, R} = eredis_sub:start_link(),
 	eredis_sub:controlling_process(R, self()),
 	eredis_sub:subscribe(R, [Ch]),
@@ -31,7 +30,6 @@ handle_info({message, _Ch, Msg, Sub}, Event) ->
 	{noreply, Event};
 
 handle_info({subscribed, _Ch, _Sub}, Event) ->
-	lager:debug("GS HI"),
 	{noreply, Event}.
 
 terminate(_R, _E) -> ok.

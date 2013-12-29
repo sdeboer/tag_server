@@ -26,13 +26,8 @@ start_link() ->
 init([]) ->
 	{ok, { {one_for_one, 5, 10}, []} }.
 
-subscription_names(Ch) ->
-	Ch1 = erlang:binary_to_atom(iolist_to_binary([?MODULE_STRING, Ch]), utf8),
-	Ch2 = erlang:binary_to_atom(iolist_to_binary([?MODULE_STRING, "_redis_", Ch]), utf8),
-	{Ch1, Ch2}.
-
 stop_subscriber(Ch) ->
-	{Ch1, Ch2} = subscription_names(Ch),
+	{Ch1, Ch2} = game_controller:game_channels(Ch),
 	supervisor:terminate_child(?MODULE, Ch2),
 	supervisor:terminate_child(?MODULE, Ch1),
 	supervisor:delete_child(?MODULE, Ch2),
@@ -40,9 +35,10 @@ stop_subscriber(Ch) ->
 	ok.
 
 event_subscriber(Ch) ->
-	{Ch1, Ch2} = subscription_names(Ch),
+		R = game_controller:game_channels(Ch),
+	lager:debug("ES R ~p", [R]),
+	{Ch1, Ch2} = R,
 	Child = ?CHILD(Ch1, gen_event, {local, Ch1}),
-	lager:debug("CHIL ~p", [Child]),
 	Event = supervisor:start_child(?MODULE, Child),
 
 	case Event of

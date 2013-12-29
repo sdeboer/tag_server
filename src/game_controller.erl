@@ -2,8 +2,6 @@
 
 -behaviour(gen_event).
 
--export([ start_link/1 ]).
-
 -export([
 	init/1, terminate/2,
 	handle_info/2,
@@ -14,7 +12,7 @@
 
 -export([
 	update/3,
-	game_channel/1
+	game_channels/1
 	]).
 
 -record(state, {
@@ -22,34 +20,24 @@
 		profile_id,
 		websocket,
 		game_channel,
-		publisher,
-		sub_channel
+		publisher
 		}).
-
-start_link(Args) ->
-	lager:debug("Got here ~p", [Args]),
-	gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
 	GID = proplists:get_value(game_id, Args),
 
-	lager:debug("Starting ~p : ~p", [?MODULE, GID]),
+	lager:debug("Starting GC : ~p", [GID]),
 
-	GidCh = game_channel(GID),
-
-	ChSub = pubsub:new_sub(GidCh),
+	{_ErCh, ReCh} = game_channels(GID),
 
 	{ok, Pub} = eredis:start_link(),
-
-	gen_event:add_handler(ChSub, self()),
 
 	{ok, #state{
 			profile_id = proplists:get_value(profile_id, Args),
 			game_id = GID,
-			game_channel = GidCh,
+			game_channel = ReCh,
 			websocket = proplists:get_value(websocket, Args),
-			publisher = Pub,
-			sub_channel = ChSub
+			publisher = Pub
 			}}.
 
 update(GC, PID, Location) ->
@@ -72,10 +60,12 @@ handle_info(stop, S) -> {stop, normal, S};
 handle_info(_Info, S) -> {ok, S}.
 
 terminate(_R, S) ->
-	gen_event:delete_handler(S#state.sub_channel, self()),
+	eredis:stop(S#state.publisher),
 	ok.
 
 code_change(_Old, S, _Extra) -> {ok, S}.
 
-game_channel(GID) ->
-	erlang:binary_to_atom(iolist_to_binary([?MODULE_STRING, GID]), utf8).
+game_channels(GID) ->
+	Ch1 = erlang:binary_to_atom(iolist_to_binary([?MODULE_STRING, GID]), utf8),
+	Ch2 = erlang:binary_to_atom(iolist_to_binary([?MODULE_STRING, "_redis_", GID]), utf8),
+	{Ch1, Ch2}.
