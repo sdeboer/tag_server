@@ -4,8 +4,8 @@
 -export([start_link/0]).
 -export([init/1]).
 
--define(CHILD(I, Type),
-	{I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(CHILD(I),
+	{I, {I, start_link, []}, permanent, 5000, worker, [I]}).
 -define(SUP(I),
 	{I, {I, start_link, []}, permanent, infinity, supervisor, [I]}).
 
@@ -14,7 +14,7 @@ start_link() ->
 
 init([]) ->
 	Children = [
-			?CHILD(persist, worker),
+			?CHILD(persist),
 			?SUP(pubsub_sup),
 			?SUP(game_controller_sup)
 			],
