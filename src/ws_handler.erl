@@ -14,40 +14,66 @@ init({tcp, http}, _Req, _RouteOpts) ->
 -record(state, {
 		observer,
 		subscriber,
-		game_id
+		game
 		}).
 
 websocket_init(_Transport, Req, _RouteOpts) ->
-	% erlang:start_timer(1000, self(), <<"Hi!">>),
 	{ok, SID} = sessions:uuid(Req),
-	Observer = case profile:find_by_session(SID) of
-		{ok, O} -> O;
-		undefined ->
-			%self() ! [{send, null}, {type, <<"profile">>}, {message, <<"needed">>}],
-			undefined
-	end,
 
-	GID = <<"GID">>,
-	Sub = pubsub_sup:event_subscriber(GID),
-	GCProps = [
-			{game_id, GID},
-			{profile_id, profile:id(Observer)},
-			{websocket, self()}
-			],
+	{GID, R2} = cowboy_req:qs_val(<<"game_id">>, Req),
+	Game = game:find(GID),
 
-	ok = gen_event:add_sup_handler(Sub, {game_controller, GID}, GCProps),
-	Req2 = cowboy_req:compact(Req),
-	{ok, Req2, #state{
-			observer = Observer,
-			subscriber = Sub,
-			game_id = GID}}.
+	case profile:find_by_session(SID) of
+		{ok, Observer} -> 
+			Sub = pubsub_sup:event_subscriber(GID),
+
+			GCProps = [
+					{game_id, GID},
+					{profile_id, profile:id(Observer)},
+					{websocket, self()}
+					],
+
+			ok = gen_event:add_sup_handler(Sub, {game_controller, GID}, GCProps),
+
+			R3 = cowboy_req:compact(R2),
+
+			{ok, R3, #state{
+					observer = Observer,
+					subscriber = Sub,
+					game = Game
+					}}
+
+			;
+
+		undefined -> {shutdown, Req}
+	end.
 
 % Called when text message arrives
-websocket_handle({text, Msg}, Req, State) ->
+websocket_handle({text, Msg}, Req, S) ->
 	lager:debug("WS Rec: ~p", [Msg]),
+	{Data} = jiffy:decode(Msg),
+
+	WSID = proplists:get_value(<<"callback_id">>, Data),
+
+	Ret = case proplists:get_value(<<"command">>, Data) of
+		<<"geo">> ->
+			{Coords} = proplists:get_value(<<"coords">>, Data),
+
+			Loc = location:update(
+					S#state.game,
+					S#state.observer,
+					Coords
+					),
+
+			gen_event:call(S#state.subscriber, {geo, Loc}),
+			{ack, WSID};
+		undefined ->
+			{nop, WSID}
+	end,
+
 	{reply,
-		{text, <<Msg/binary>>},
-		Req, State};
+		{text, jiffy:encode({[Ret]})},
+		Req, S};
 
 % For any other type of content that gets sent
 websocket_handle(_Data, Req, State) ->

@@ -3,7 +3,8 @@
 -export([
 	distance/2,
 	bearing/2,
-	vector/2
+	vector/2,
+	x/2, y/2
 	]).
 
 -export([
@@ -63,3 +64,6 @@ sexagesimaltodecimal(D, M, S) ->
 
 radiusize({X, Y}) -> {X, Y, ?RADIUS};
 radiusize({X, Y, Z}) -> {X, Y, ?RADIUS + Z}.
+
+x(R, W) -> R * math:cos(W).
+y(R, W) -> R * math:sin(W).
