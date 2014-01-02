@@ -39,6 +39,12 @@
 	union/1, unionstore/2
 	]).
 
+% Hash API
+-export([
+	hash_get/2, hash_set/3, hash_del/2,
+	hash_all/1
+	]).
+
 start_link() ->
 	gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
 
@@ -179,6 +185,21 @@ unionstore(Dest, SList) when is_record(Dest, set) ->
 unionstore(DK, SList) ->
 	unionstore(#set{key = DK}, SList).
 
+% Hash API
+hash_get(K, F) ->
+	command(["HGET", K, F]).
+
+hash_set(K, F, V) ->
+	command(["HSET", K, F, V]).
+
+hash_all(K) ->
+	to_proplist(command(["HGETALL", K])).
+
+hash_del(K, F) ->
+	command(["HDEL", K, F]).
+
+% private
+
 init([]) ->
 	{ok, Redis} = eredis:start_link(),
 	{ok, Redis}.
@@ -213,3 +234,6 @@ handle_cast(_Message, Redis) -> {noreply, Redis}.
 handle_info(_Message, Redis) -> {noreply, Redis}.
 terminate(_Reason, _Redis) -> ok.
 code_change(_OldVersion, Redis, _Extra) -> {ok, Redis}.
+
+to_proplist([]) -> [];
+to_proplist([K, V | T]) -> [{K, V} | to_proplist(T)].

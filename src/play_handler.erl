@@ -60,8 +60,8 @@ websocket_handle({text, Msg}, Req, S) ->
 			{Coords} = proplists:get_value(<<"coords">>, Data),
 
 			Loc = location:update(
-					S#state.game,
-					S#state.observer,
+					game:id(S#state.game),
+					profile:id(S#state.observer),
 					Coords
 					),
 
