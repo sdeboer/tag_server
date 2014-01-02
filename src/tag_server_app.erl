@@ -33,9 +33,9 @@ routes() ->
 		[{'_',
 				[
 					{"/profile/[:profile_id]", profile_handler, []},
-					{"/game/:game_id", game_handler, []},
 					{"/game", game_list_handler, []},
-					{"/ws", ws_handler, []}
+					{"/game/:game_id", game_handler, []},
+					{"/play/:game_id", play_handler, []}
 					%{"/static/[...]", cowboy_static, [
 					%		{directory, {priv_dir, tag_server, [<<"static">>]}}
 							%{mimetypes, {fun mimetypes:path_to_mimes/2, default}}

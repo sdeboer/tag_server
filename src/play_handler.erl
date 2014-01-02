@@ -1,4 +1,4 @@
--module(ws_handler).
+-module(play_handler).
 
 -behaviour(cowboy_websocket_handler).
 
@@ -20,7 +20,7 @@ init({tcp, http}, _Req, _RouteOpts) ->
 websocket_init(_Transport, Req, _RouteOpts) ->
 	{ok, SID} = sessions:uuid(Req),
 
-	{GID, R2} = cowboy_req:qs_val(<<"game_id">>, Req),
+	{GID, R2} = cowboy_req:binding(game_id, Req),
 	Game = game:find(GID),
 
 	case profile:find_by_session(SID) of
