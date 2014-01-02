@@ -14,6 +14,7 @@ init({tcp, http}, _Req, _RouteOpts) ->
 -record(state, {
 		observer,
 		subscriber,
+		handler_id,
 		game
 		}).
 
@@ -33,13 +34,16 @@ websocket_init(_Transport, Req, _RouteOpts) ->
 					{websocket, self()}
 					],
 
-			ok = gen_event:add_sup_handler(Sub, {game_controller, GID}, GCProps),
+			HID = {game_controller, GID},
+
+			ok = gen_event:add_sup_handler(Sub, HID, GCProps),
 
 			R3 = cowboy_req:compact(R2),
 
 			{ok, R3, #state{
 					observer = Observer,
 					subscriber = Sub,
+					handler_id = HID,
 					game = Game
 					}}
 
@@ -59,13 +63,15 @@ websocket_handle({text, Msg}, Req, S) ->
 		<<"geo">> ->
 			{Coords} = proplists:get_value(<<"coords">>, Data),
 
+			PID = profile:id(S#state.observer),
 			Loc = location:update(
 					game:id(S#state.game),
-					profile:id(S#state.observer),
+					PID,
 					Coords
 					),
 
-			gen_event:call(S#state.subscriber, {geo, Loc}),
+			lager:debug("Updating with ~p", [Loc]),
+			gen_event:call(S#state.subscriber, S#state.handler_id, {location, PID, Loc}),
 			{ack, WSID};
 		undefined ->
 			{nop, WSID}

@@ -80,7 +80,7 @@ move(C, La2, Lo2, _Alt, Acc) ->
 coords(H, K) ->
 	case persist:hash_get([?COORDS_PREFIX, H], K) of
 		undefined -> undefined;
-		V -> 
+		V ->
 			{PL} = jiffy:decode(V),
 			proplist_to_coords(PL)
 	end.

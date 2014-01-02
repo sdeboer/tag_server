@@ -4,8 +4,7 @@
 	find/1,
 	create/2,
 	list/1, list/2, list/3,
-	all/3,
-	coords/2, coords/3
+	all/3
 	]).
 
 -export([
