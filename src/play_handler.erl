@@ -43,7 +43,7 @@ websocket_init(_Transport, Req, _RouteOpts) ->
 			{ok, R3, #state{
 					observer = Observer,
 					subscriber = Sub,
-					handler_id = HID,
+					handler_id = {game_controller, <<"no">>},
 					game = Game
 					}}
 
@@ -70,7 +70,7 @@ websocket_handle({text, Msg}, Req, S) ->
 					Coords
 					),
 
-			lager:debug("Updating with ~p", [Loc]),
+			lager:debug("Updating with ~p ~p : ~p", [S#state.subscriber,S#state.handler_id, Loc]),
 			gen_event:call(S#state.subscriber, S#state.handler_id, {location, PID, Loc}),
 			{ack, WSID};
 		undefined ->
