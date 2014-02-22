@@ -39,7 +39,7 @@ update(Hash, Key, Data) ->
 		nochange -> nop
 	end,
 
-	Coords.
+	coords_to_proplist(Coords).
 
 move(undefined, La2, Lo2, _Alt, _Acc) ->
 	C = #coords{x = 0, y = 0, lat = La2, long = Lo2},

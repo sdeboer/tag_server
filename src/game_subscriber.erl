@@ -16,16 +16,16 @@ start_link(Args) ->
 	gen_server:start_link(?MODULE, Args, []).
 
 init([Event, Ch]) ->
+	lager:debug("GS Start ~p", [Ch]),
 	{ok, R} = eredis_sub:start_link(),
 	eredis_sub:controlling_process(R, self()),
 	eredis_sub:subscribe(R, [Ch]),
 	{ok, Event}.
 
 handle_info({message, _Ch, Msg, Sub}, Event) ->
-	gen_event:notify(
-		Event,
-		jiffy:decode(Msg)
-		),
+	{M} = jiffy:decode(Msg),
+	lager:debug("GS received ~p", [M]),
+	gen_event:notify(Event, M),
 	eredis_sub:ack_message(Sub),
 	{noreply, Event};
 

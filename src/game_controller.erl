@@ -48,11 +48,12 @@ handle_event(Event, S) ->
 	{ok, S}.
 
 handle_call({location, PID, Location}, S) ->
-	lager:debug("Anthyng"),
+	lager:debug("Anthyng ~p ~p", [PID, Location]),
 	Msg = jiffy:encode([location, PID, Location]),
 	lager:debug("Publish on ~p -> ~p", [S#state.game_channel, Msg]),
-	eredis:q(S#state.publisher, ["PUBLISH", 
-			S#state.game_channel, Msg]),
+	eredis:q(S#state.publisher,
+		["PUBLISH", S#state.game_channel, Msg]
+		),
 	{ok, S};
 
 handle_call(_R, _S) -> {stop, bad_call, undefined}.

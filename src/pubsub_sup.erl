@@ -35,7 +35,7 @@ stop_subscriber(Ch) ->
 	ok.
 
 event_subscriber(Ch) ->
-		R = game_controller:game_channels(Ch),
+	R = game_controller:game_channels(Ch),
 	lager:debug("ES R ~p", [R]),
 	{Ch1, Ch2} = R,
 	Child = ?CHILD(Ch1, gen_event, {local, Ch1}),

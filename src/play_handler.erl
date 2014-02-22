@@ -43,7 +43,7 @@ websocket_init(_Transport, Req, _RouteOpts) ->
 			{ok, R3, #state{
 					observer = Observer,
 					subscriber = Sub,
-					handler_id = {game_controller, <<"no">>},
+					handler_id = HID,
 					game = Game
 					}}
 
