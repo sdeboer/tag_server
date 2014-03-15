@@ -26,8 +26,6 @@
 init(Args) ->
 	GID = proplists:get_value(game_id, Args),
 
-	lager:debug("Starting GC : ~p", [GID]),
-
 	{_ErCh, ReCh} = game_channels(GID),
 
 	{ok, Pub} = eredis:start_link(),
@@ -44,11 +42,10 @@ update(GC, PID, Location) ->
 	gen_event:call(GC, {location, PID, Location}).
 
 handle_event(Event, S) ->
-	lager:debug("GC Event ~p", [Event]),
+	S#state.websocket ! {send, Event},
 	{ok, S}.
 
 handle_call({location, PID, Location}, S) ->
-	lager:debug("HANDLE location ~p ~p", [PID, Location]),
 	Obj = [{playerID, PID}, {command, location} | Location],
 	Msg = jiffy:encode({Obj}),
 	lager:debug("Publish on ~p -> ~p", [S#state.game_channel, Msg]),

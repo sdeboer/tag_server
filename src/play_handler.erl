@@ -54,7 +54,6 @@ websocket_init(_Transport, Req, _RouteOpts) ->
 
 % Called when text message arrives
 websocket_handle({text, Msg}, Req, S) ->
-	lager:debug("WS Rec: ~p", [Msg]),
 	{Data} = jiffy:decode(Msg),
 
 	WSID = proplists:get_value(<<"callback_id">>, Data),
@@ -70,7 +69,7 @@ websocket_handle({text, Msg}, Req, S) ->
 					Coords
 					),
 
-			lager:debug("Updating with ~p ~p : ~p", [S#state.subscriber,S#state.handler_id, Loc]),
+			% lager:debug("Updating with ~p ~p : ~p", [S#state.subscriber,S#state.handler_id, Loc]),
 			gen_event:call(S#state.subscriber, S#state.handler_id, {location, PID, Loc}),
 			{ack, WSID};
 		undefined ->
@@ -91,6 +90,9 @@ websocket_info({timeout, _Ref, Msg}, Req, State) ->
 
 websocket_info({send, Ref, Msg}, Req, State) ->
 	{reply, {text, jiffy:encode({Ref, Msg})}, Req, State};
+
+websocket_info({send, Msg}, Req, State) ->
+	{reply, {text, jiffy:encode({Msg})}, Req, State};
 
 websocket_info(_Info, Req, State) ->
 	{ok, Req, State}.

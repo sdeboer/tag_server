@@ -16,21 +16,18 @@ start_link(Args) ->
 	gen_server:start_link(?MODULE, Args, []).
 
 init([Event, Ch]) ->
-	lager:debug("GS Start ~p : ~p", [Ch, self()]),
 	{ok, R} = eredis_sub:start_link(),
 	eredis_sub:controlling_process(R, self()),
 	eredis_sub:subscribe(R, [Ch]),
 	{ok, Event}.
 
 handle_info({message, _Ch, Msg, Sub}, Event) ->
-	lager:debug("GS received ~p", [Msg]),
 	{M} = jiffy:decode(Msg),
 	gen_event:notify(Event, M),
 	eredis_sub:ack_message(Sub),
 	{noreply, Event};
 
-handle_info({subscribed, Ch, Sub}, Event) ->
-	lager:debug("subscribed ~p", [Ch]),
+handle_info({subscribed, _Ch, Sub}, Event) ->
 	eredis_sub:ack_message(Sub),
 	{noreply, Event};
 
@@ -40,12 +37,12 @@ handle_info({dropped, _N, Sub}, Event) ->
 	{noreply, Event};
 
 handle_info({eredis_disconnected, Sub}, Event) ->
-	lager:notice("Game subscriber disconnected"),
+	lager:warning("Game subscriber disconnected"),
 	eredis_sub:ack_message(Sub),
 	{noreply, Event};
 
 handle_info({eredis_connected, Sub}, Event) ->
-	lager:notice("Game subscriber reconnected"),
+	lager:warning("Game subscriber reconnected"),
 	eredis_sub:ack_message(Sub),
 	{noreply, Event}.
 
