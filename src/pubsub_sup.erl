@@ -35,9 +35,7 @@ stop_subscriber(Ch) ->
 	ok.
 
 event_subscriber(Ch) ->
-	R = game_controller:game_channels(Ch),
-	lager:debug("ES R ~p", [R]),
-	{Ch1, Ch2} = R,
+	{Ch1, Ch2} = game_controller:game_channels(Ch),
 	Child = ?CHILD(Ch1, gen_event, {local, Ch1}),
 	Event = supervisor:start_child(?MODULE, Child),
 
@@ -46,7 +44,7 @@ event_subscriber(Ch) ->
 			% Brand new event channel, need to create the 
 			% redis subscriber to go with it.
 
-			{ok, _GS} = supervisor:start_child(?MODULE, ?CHILD(Ch2, game_subscriber, [Sub, Ch]) ),
+			{ok, _GS} = supervisor:start_child(?MODULE, ?CHILD(Ch2, game_subscriber, [Sub, Ch2]) ),
 			Sub;
 
 		{error, {already_started, Sub}} -> Sub

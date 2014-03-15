@@ -15,7 +15,6 @@ start_link() ->
 init([]) ->
 	Children = [
 			?CHILD(persist),
-			?SUP(pubsub_sup),
-			?SUP(game_controller_sup)
+			?SUP(pubsub_sup)
 			],
 	{ok, { {one_for_one, 5, 10}, Children} }.
