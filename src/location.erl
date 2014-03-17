@@ -6,8 +6,8 @@
 	]).
 
 -record(coords, {
-		lat, long, % last one
-		x, y, z,
+		lat, long,
+		x = 0, y = 0, z = 0,
 		scale = [1, 0, 1]
 		}).
 
@@ -27,7 +27,7 @@ update(Hash, Key, Data) ->
 
 	Current = coords(Hash, Key),
 
-	{Res, Coords} = move(Current,
+	{Res, C} = move(Current,
 			proplists:get_value(<<"latitude">>, Data),
 			proplists:get_value(<<"longitude">>, Data),
 			Alt,
@@ -35,14 +35,14 @@ update(Hash, Key, Data) ->
 			),
 
 	case Res of
-		change -> coords(Hash, Key, Coords);
+		change -> coords(Hash, Key, C);
 		nochange -> nop
 	end,
 
-	coords_to_proplist(Coords).
+	[{x, C#coords.x}, {y, C#coords.y}, {z, C#coords.z}].
 
 move(undefined, La2, Lo2, _Alt, _Acc) ->
-	C = #coords{x = 0, y = 0, lat = La2, long = Lo2},
+	C = #coords{lat = La2, long = Lo2},
 	{change, C};
 
 move(C, La2, Lo2, _Alt, Acc) ->
@@ -85,12 +85,20 @@ coords(H, K) ->
 			proplist_to_coords(PL)
 	end.
 
-coords(H, K, V) ->
-	PL = coords_to_proplist(V),
+coords(H, K, C) when is_record(C, coords) ->
+	PL = coords_to_proplist(C),
 	lager:debug("coords for ~p -> ~p", [K, PL]),
-	V1 = jiffy:encode({PL}),
-	<<"1">> = persist:hash_set([?COORDS_PREFIX, H], K, V1),
-	V.
+	C1 = jiffy:encode({PL}),
+	<<"1">> = persist:hash_set([?COORDS_PREFIX, H], K, C1),
+	C;
+
+coords(H, K, Pos) ->
+	coords(H, K, #coords{
+									x = proplists:get_value(x, Pos),
+									y = proplists:get_value(y, Pos),
+									z = proplists:get_value(z, Pos)
+								 }),
+	Pos.
 
 coords_to_proplist(#coords{} = Rec) ->
 	lists:zip(

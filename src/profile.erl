@@ -81,11 +81,15 @@ find_or_create_by_session(SID) ->
 		{ok, P} -> {ok, P}
 	end.
 
-create(SID) ->
-	lager:debug("Creating for ~p", [SID]),
+create() ->
 	PID = list_to_binary(uuid:to_string(uuid:uuid4())),
 	P = #profile{ id = PID },
 	ok = persist:save([?PREFIX, PID], P),
+	P.
+
+create(SID) ->
+	lager:debug("Creating for ~p", [SID]),
+	P = create(),
 	% FIXME This should have an expiry on it
 	ok = persist:save([?PREFIX, ?SESSION_AFFIX, SID], PID),
 	P.

@@ -68,10 +68,11 @@ create(GameType, Owner) ->
 			type = GameType
 			},
 	ok = persist:save([?META_PREFIX, GID], M),
-	{ok, P1} = persist:set([?PLAYERS_PREFIX, GID]),
-	persist:add([PID], P1),
 
 	G = #game{meta = M, players = [PID]},
+
+	{ok, P1} = persist:set([?PLAYERS_PREFIX, GID]),
+	persist:add([PID], P1),
 
 	{ok, Pl1} = persist:set([?PLAYER_GAME_PREFIX, PID]),
 	persist:add([GID], Pl1),
@@ -81,6 +82,8 @@ create(GameType, Owner) ->
 
 	{ok, S1} = persist:set([?STATE_PREFIX, State]),
 	persist:add([GID], S1),
+
+	type_init(GameType),
 
 	G.
 
@@ -96,6 +99,23 @@ players(G) ->
 	PL = persist:members(G#game.players),
 	MP = fun(Pid) -> player:find(Pid) end,
 	lists:map(MP, PL).
+
+type_init(G) ->
+	Type = game:type(G),
+	lager:debug("Game Type of ~p", [Type]),
+	case Type of
+		0 -> % Robot
+			P1 = profile:create(),
+			P2 = profile:handle("Robot", P1),
+			P3 = profile:save(P2),
+			PID = profile:id(P3),
+			% TODO attach this to a Sup
+			% Save robot into Game
+			spiral_robot:start_link(
+						 [{game, G}, {profile_id, PID}]);
+		true -> nop
+	end,
+	G.
 
 owner(G) ->
 	player:find(G#game.meta#meta.owner).
