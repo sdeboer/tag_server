@@ -87,9 +87,9 @@ coords(H, K) ->
 
 coords(H, K, C) when is_record(C, coords) ->
 	PL = coords_to_proplist(C),
-	lager:debug("coords for ~p -> ~p", [K, PL]),
+	% lager:debug("coords for ~p ~p -> ~p", [H, K, PL]),
 	C1 = jiffy:encode({PL}),
-	<<"1">> = persist:hash_set([?COORDS_PREFIX, H], K, C1),
+	persist:hash_set([?COORDS_PREFIX, H], K, C1),
 	C;
 
 coords(H, K, Pos) ->

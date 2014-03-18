@@ -40,7 +40,7 @@ init(Args) ->
 	SF = proplists:get_value(spiral, Args, {500, 0, 334}),
 	Sp = proplists:get_value(speed, Args, 2.0) / 1000000.0,
 	{ok, Redis} = eredis:start_link(),
-	GID = game:id(proplist:get_value(game, Args)),
+	GID = game:id(proplists:get_value(game, Args)),
 	S = #state{
 			game_id = GID,
 			profile_id = proplists:get_value(profile_id, Args),
@@ -103,7 +103,7 @@ move_me(S) ->
 			nop
 	end,
 
-	lager:debug("New Pos ~p -> ~p", [S#state.current, NPos]),
+	% lager:debug("New Pos ~p -> ~p", [S#state.current, NPos]),
 	%erlang:send_after(?DELTA, self(), move),
 	S#state{stamp = N, current = NPos}.
 
@@ -122,7 +122,7 @@ update_game(S) ->
 	% can we make our own?  Can we access a prime one?
 	% It should probably be there...with a gen_server:cast
 
-	{_Ch, Channel} = game_controller:channels(S#state.game_id),
+	{_Ch, Channel} = game_controller:game_channels(S#state.game_id),
 	Obj = [{playerID, S#state.profile_id},
 				 {command, location}
 				 | C],

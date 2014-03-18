@@ -83,7 +83,7 @@ create(GameType, Owner) ->
 	{ok, S1} = persist:set([?STATE_PREFIX, State]),
 	persist:add([GID], S1),
 
-	type_init(GameType),
+	type_init(G),
 
 	G.
 
@@ -102,11 +102,10 @@ players(G) ->
 
 type_init(G) ->
 	Type = game:type(G),
-	lager:debug("Game Type of ~p", [Type]),
 	case Type of
 		0 -> % Robot
 			P1 = profile:create(),
-			P2 = profile:handle("Robot", P1),
+			P2 = profile:handle(<<"Robot">>, P1),
 			P3 = profile:save(P2),
 			PID = profile:id(P3),
 			% TODO attach this to a Sup

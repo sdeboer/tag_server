@@ -3,7 +3,7 @@
 -export([
 	find/1, find_by_session/1, find_by_request/1,
 	find_or_create_by_session/1,
-	save/1
+	create/0, save/1
 	]).
 
 -export([
