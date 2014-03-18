@@ -90,6 +90,7 @@ create() ->
 create(SID) ->
 	lager:debug("Creating for ~p", [SID]),
 	P = create(),
+	PID = id(P),
 	% FIXME This should have an expiry on it
 	ok = persist:save([?PREFIX, ?SESSION_AFFIX, SID], PID),
 	P.
