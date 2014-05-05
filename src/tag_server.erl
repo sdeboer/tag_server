@@ -7,6 +7,8 @@
 start() ->
 	ok = application:start(sync),
 	ok = application:start(syntax_tools),
+	ok = application:start(compiler),
+	ok = application:start(goldrush),
 	ok = application:start(lager),
 	ok = application:start(crypto),
 	ok = application:start(cowlib),

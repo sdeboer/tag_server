@@ -4,9 +4,8 @@
 		{vsn, git},
 		{registered, [tag_server_sup]},
 		{applications, [
-				kernel,stdlib,lager,
-				syntax_tools,
-				cowboy
+				kernel, stdlib, goldrush,
+				lager, syntax_tools, cowboy
 				]},
 		{mod, { tag_server_app, []}},
 		{env, [
