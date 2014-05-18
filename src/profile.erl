@@ -72,13 +72,15 @@ find_by_session(SID) ->
 	end.
 
 find_by_request(Req) ->
-	{ok, SID} = sessions:uuid(Req),
-	find_by_session(SID).
+	case sessions:uuid(Req) of
+		undefined -> undefined;
+		SID -> find_by_session(SID)
+	end.
 
 find_or_create_by_session(SID) ->
 	case find_by_session(SID) of
-		undefined -> {ok, create(SID)};
-		{ok, P} -> {ok, P}
+		{ok, P} -> {ok, P};
+		undefined -> {ok, create(SID)}
 	end.
 
 create() ->

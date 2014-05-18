@@ -14,9 +14,10 @@ execute(Req, Env) ->
 			% used within Rails with the secret key.
 			{Host, _} = cowboy_req:host(Req),
 			UUID = uuid:to_string(uuid:uuid3(dns, Host)),
-			Opts = [{domain, "localhost"}],
-			Req2 = cowboy_req:set_resp_cookie(Name, UUID, Opts, Req),
+			%Opts = [{domain, Host}],
+			Req2 = cowboy_req:set_resp_cookie(Name, UUID, [], Req),
 			{ok, Req2, Env};
+
 		{_UUID, _} ->
 			% FIXME cont'd and then we need to confirm that we still
 			% like this browser.
@@ -25,7 +26,7 @@ execute(Req, Env) ->
 
 uuid(Req) ->
 	{Val, _R2} = cowboy_req:cookie(session_name(), Req, undefined),
-	{ok, Val}.
+	Val.
 
 session_name() ->
 	% Is this expensive enough that it should be memoizing the

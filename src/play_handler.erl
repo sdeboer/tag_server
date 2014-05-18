@@ -19,7 +19,7 @@ init({tcp, http}, _Req, _RouteOpts) ->
 		}).
 
 websocket_init(_Transport, Req, _RouteOpts) ->
-	{ok, SID} = sessions:uuid(Req),
+	SID = sessions:uuid(Req),
 
 	{GID, R2} = cowboy_req:binding(game_id, Req),
 	Game = game:find(GID),

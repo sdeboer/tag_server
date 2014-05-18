@@ -24,37 +24,41 @@ init({tcp, http}, _Req, _Opts) ->
 	{upgrade, protocol, cowboy_rest}.
 
 rest_init(Req, _RouteOpts) ->
-	{ok, SID} = sessions:uuid(Req),
-	{ok, Observer} = profile:find_or_create_by_session(SID),
-	OID = profile:id(Observer),
-	View = case cowboy_req:binding(profile_id, Req) of
-		{undefined, _Req} ->
-			undefined;
-		{ProfileId, _Req} when OID == ProfileId ->
-			Observer;
-		{ProfileId, _Req} ->
-			profile:find(ProfileId)
-	end,
+	{Obs, OID} = case sessions:uuid(Req) of
+							 undefined -> {undefined, undefined};
+							 SID ->
+								 {ok, O} = profile:find_or_create_by_session(SID),
+								 {O, profile:id(O)}
+						 end,
 
-	S = #state{ viewing = View, observer = Observer },
+	View = case cowboy_req:binding(profile_id, Req) of
+					 {undefined, _Req} ->
+						 undefined;
+					 {ProfileId, _Req} when OID == ProfileId ->
+						 Obs;
+					 {ProfileId, _Req} ->
+						 profile:find(ProfileId)
+				 end,
+
+	S = #state{ viewing = View, observer = Obs },
 
 	{ok, Req, S}.
 
 allowed_methods(Req, State) ->
 	{[<<"GET">>, <<"POST">>, <<"PATCH">>, <<"PUT">>],
-		Req, State}.
+	 Req, State}.
 
 content_types_accepted(Req, State) ->
 	{[
-			{{<<"application">>, <<"json">>, '*'}, alter_profile}
-			], Req, State}.
+		{{<<"application">>, <<"json">>, '*'}, alter_profile}
+	 ], Req, State}.
 
 content_types_provided(Req, State) ->
 	{[
-			{{<<"application">>, <<"json">>, '*'}, to_json},
-			{<<"text/html">>, to_json},
-			{<<"text/plain">>, to_json}
-			], Req, State}.
+		{{<<"application">>, <<"json">>, '*'}, to_json},
+		{<<"text/html">>, to_json},
+		{<<"text/plain">>, to_json}
+	 ], Req, State}.
 
 alter_profile(Req, S) ->
 	P = S#state.observer,
@@ -68,11 +72,16 @@ alter_profile(Req, S) ->
 
 to_json(Req, S) ->
 	Prof = case S#state.viewing of
-		undefined -> S#state.observer;
-		P -> P
-	end,
+					 undefined -> S#state.observer;
+					 P -> P
+				 end,
 
-	Json = profile:to_json(Prof),
+	Json = case Prof of
+					 undefined ->
+						 jiffy:encode({[ {noprofile, true} ]});
+					 P2 ->
+						 profile:to_json(P2)
+				 end,
 
 	json_handler:return_json(Json, Req, S).
 
