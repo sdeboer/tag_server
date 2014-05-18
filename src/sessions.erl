@@ -12,10 +12,9 @@ execute(Req, Env) ->
 		{undefined, _} ->
 			% FIXME this should really be a secure cookie of the nature
 			% used within Rails with the secret key.
-			{Host, _} = cowboy_req:host(Req),
-			UUID = uuid:to_string(uuid:uuid3(dns, Host)),
-			%Opts = [{domain, Host}],
-			Req2 = cowboy_req:set_resp_cookie(Name, UUID, [], Req),
+			UUID = uuid:to_string(uuid:uuid1()),
+			Opts = [ {http_only, true} ],
+			Req2 = cowboy_req:set_resp_cookie(Name, UUID, Opts, Req),
 			{ok, Req2, Env};
 
 		{_UUID, _} ->
