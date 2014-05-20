@@ -9,23 +9,31 @@
 execute(Req, Env) ->
 	Name = session_name(),
 	case cowboy_req:cookie(Name, Req) of
-		{undefined, _} ->
+		{undefined, R} ->
 			% FIXME this should really be a secure cookie of the nature
 			% used within Rails with the secret key.
 			UUID = uuid:to_string(uuid:uuid1()),
 			Opts = [ {http_only, true} ],
-			Req2 = cowboy_req:set_resp_cookie(Name, UUID, Opts, Req),
-			{ok, Req2, Env};
+			Req2 = cowboy_req:set_resp_cookie(Name, UUID, Opts, R),
+			% To have the correct UUID through this initial request
+			Req3 = cowboy_req:set_meta(Name, UUID, Req2),
+			{ok, Req3, Env};
 
-		{_UUID, _} ->
+		{_UUID, R} ->
 			% FIXME cont'd and then we need to confirm that we still
 			% like this browser.
-			{ok, Req, Env}
+			{ok, R, Env}
 	end.
 
 uuid(Req) ->
-	{Val, _R2} = cowboy_req:cookie(session_name(), Req, undefined),
-	Val.
+	Name = session_name(),
+	case cowboy_req:cookie(Name, Req, undefined) of
+		{undefined, R} -> 
+			% The first request will not have a cookie yet
+			{U, _} = cowboy_req:meta(Name, R),
+			U;
+		{U, _} -> U
+	end.
 
 session_name() ->
 	% Is this expensive enough that it should be memoizing the
