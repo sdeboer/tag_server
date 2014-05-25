@@ -11,7 +11,8 @@
 	id/1,
 	type/1, state/1, started/1,
 	players/1, owner/1,
-	to_json/1
+	to_json/1,
+	finish/1
 	]).
 
 -record(meta, {
@@ -20,12 +21,14 @@
 		owner,
 		state,
 		type,
-		started
+		started,
+		finished = undefined
 		}).
 
 -record(game, {
 		players = [],
-		meta
+		meta,
+		spiralPid = undefined
 		}).
 
 -define(PREFIX, ?MODULE_STRING).
@@ -67,7 +70,6 @@ create(GameType, Owner) ->
 			started = calendar:universal_time(),
 			type = GameType
 			},
-	ok = persist:save([?META_PREFIX, GID], M),
 
 	G = #game{meta = M, players = [PID]},
 
@@ -83,9 +85,8 @@ create(GameType, Owner) ->
 	{ok, S1} = persist:set([?STATE_PREFIX, State]),
 	persist:add([GID], S1),
 
-	type_init(G),
-
-	G.
+	G2 = type_init(G),
+	save_meta(G2).
 
 id(G) -> G#game.meta#meta.id.
 
@@ -95,26 +96,36 @@ state(G) -> G#game.meta#meta.state.
 
 started(G) -> G#game.meta#meta.started.
 
+finish(G) ->
+	case G#game.spiralPid of
+		undefined -> nop;
+		SPid -> gen_server:cast(SPid, stop)
+	end,
+	G2 = G#game.meta#meta{finished = calender:universal_time()},
+	save_meta(G2).
+
+save_meta(G) ->
+	ok = persist:save([?META_PREFIX, id(G)], G#game.meta),
+	G.
+
 players(G) ->
 	PL = persist:members(G#game.players),
 	MP = fun(Pid) -> player:find(Pid) end,
 	lists:map(MP, PL).
 
 type_init(G) ->
-	Type = game:type(G),
-	case Type of
+	case game:type(G) of
 		0 -> % Robot
 			P1 = profile:create(),
 			P2 = profile:handle(<<"Robot">>, P1),
 			P3 = profile:save(P2),
 			PID = profile:id(P3),
 			% TODO attach this to a Sup
-			% Save robot into Game
-			spiral_robot:start_link(
-						 [{game, G}, {profile_id, PID}]);
-		true -> nop
-	end,
-	G.
+			% Save robot into Game and remove at finish
+			{ok, SRPID} = spiral_robot:start_link([{game, G}, {profile_id, PID}]),
+			G#game{spiralPid = SRPID};
+		true -> G
+	end.
 
 owner(G) ->
 	player:find(G#game.meta#meta.owner).

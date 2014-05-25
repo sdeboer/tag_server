@@ -89,9 +89,11 @@ websocket_info({timeout, _Ref, Msg}, Req, State) ->
 	{reply, {text, Msg}, Req, State};
 
 websocket_info({send, Ref, Msg}, Req, State) ->
+	lager:debug("WS Ref ~p ~p", [Ref, Msg]),
 	{reply, {text, jiffy:encode({Ref, Msg})}, Req, State};
 
 websocket_info({send, Msg}, Req, State) ->
+	lager:debug("WS Send ~p", [Msg]),
 	{reply, {text, jiffy:encode({Msg})}, Req, State};
 
 websocket_info(_Info, Req, State) ->

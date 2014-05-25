@@ -218,12 +218,12 @@ handle_call({get_value, Key}, _From, Redis) ->
 	{reply, Value, Redis};
 
 handle_call({save_value, Key, Value}, _From, Redis) ->
-	lager:debug("Saving ~p / ~p", [Key, Value]),
+	%lager:debug("Saving ~p / ~p", [Key, Value]),
 	{ok, <<"OK">>} = eredis:q(Redis, ["SET", Key, Value]),
 	{reply, ok, Redis};
 
 handle_call({command, List}, _From, Redis) ->
-	lager:debug("command ~p", [List]),
+	%lager:debug("command ~p", [List]),
 	{ok, Value} = eredis:q(Redis, List),
 	{reply, Value, Redis};
 

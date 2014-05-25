@@ -29,7 +29,7 @@
 -define(DELTA, 5000).
 
 start_link(Args) ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, Args, []).
+	gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
 	% Defaults:
