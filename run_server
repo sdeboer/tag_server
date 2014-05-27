@@ -3,6 +3,7 @@
 # Potential ENV vars, defaults are set in tag_server.app.src
 # SESSION_COOKIE (ts_session)
 # PORT (10100)
+# CHASE_DOMAIN (chase.psiinteractive.com)
 
 erl \
 	-pa ebin \
