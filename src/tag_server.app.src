@@ -11,7 +11,7 @@
 		{env, [
 				{http_port, 10100},
 				{session_cookie, <<"ts_session">>},
-				{chase_domain, <<"localhost:4567">>}
+				{chase_domain, <<"chase.psiinteractive.com">>}
 				]}
 		]}.
 % vim: set filetype=erlang:
